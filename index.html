@@ -21,6 +21,7 @@
       --lvl2:#2f6e3e;
       --lvl3:#2f8e4a;
       --lvl4:#31a65a;
+      --goalhist-bg: #16191e;
     }
     @media (prefers-color-scheme: light){
       :root{
@@ -39,6 +40,7 @@
         --lvl2:#7bc96f;
         --lvl3:#239a3b;
         --lvl4:#196127;
+        --goalhist-bg: #f4f5f8;
       }
     }
     *{box-sizing:border-box}
@@ -55,7 +57,7 @@
     }
     h1{margin:0;font-size:18px}
     .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;}
-    .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:8px 12px;border-radius:999px;font-size:13px;}
+    .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:7px 13px;border-radius:999px;font-size:13px;}
     .tab-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
     main{padding:12px;max-width:980px;margin:0 auto}
     section{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:12px;}
@@ -79,7 +81,6 @@
     .chip.muted{background:var(--chip-muted);color:var(--chip-text);}
     .muted{color:var(--muted)}
     .right{margin-left:auto}
-    /* --- summary card --- */
     .summary-card {
       background: var(--card);
       border: 1.5px solid var(--accent);
@@ -92,8 +93,7 @@
     .summary-kpi { font-size: 26px; font-weight: bold; }
     .summary-list { display: grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
     @media (max-width:600px) {.summary-list { grid-template-columns:1fr; } }
-    /* カレンダー */
-    .calendar-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .calendar-head{display:flex;align-items:center;gap:4px;margin-bottom:8px}
     .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s;}
     .calendar-title-btn:hover{background:var(--lvl1);}
     .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7,1fr);}
@@ -107,14 +107,36 @@
     .lvl3{background:var(--lvl3)}
     .lvl4{background:var(--lvl4)}
     .day.today{outline:2px solid var(--accent);outline-offset:0}
-    .item{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0d0f15;}
-    .item .chip {margin:0;}
-    .item .del-btn {padding:4px 10px;min-width:0;font-size:12px;border-radius:9px;background:var(--muted);color:var(--bg);border:none;transition:.2s;}
-    .item .del-btn:hover {background:var(--danger);color:#fff;}
-    @media (prefers-color-scheme: light){.item{background:#fff;border-color:#e5e7eb}}
-    .footer-note{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 32px}
-    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
-    .toast.show{opacity:1}
+    /* ↓カレンダー詳細 */
+    .day-detail-wrap {
+      background:var(--card);
+      border-radius:11px;
+      margin-bottom:10px;
+      box-shadow:0 2px 10px rgba(30,40,45,0.06);
+      border:1.5px solid var(--lvl0);
+      padding:18px 15px 8px 15px;
+      max-width:440px;
+    }
+    .day-detail-title {
+      font-size:19px;font-weight:600;margin-bottom:2px;letter-spacing:0.5px;
+    }
+    .day-detail-total {
+      font-size:14px;color:var(--muted);margin-bottom:10px;
+    }
+    .day-detail-list .rec-row {
+      display:flex;align-items:center;gap:10px;
+      background:var(--lvl0);
+      margin-bottom:7px;
+      border-radius:8px;
+      padding:8px 9px 8px 9px;
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .day-detail-list .rec-row .chip {margin-right:2px;}
+    .day-detail-list .rec-row .del-btn {
+      padding:3px 9px;min-width:0;font-size:13px;border-radius:7px;
+      background:var(--muted);color:var(--bg);border:none;transition:.2s;
+    }
+    .day-detail-list .rec-row .del-btn:hover {background:var(--danger);color:#fff;}
     /* --- 記録フォーム --- */
     .form-row-flex {display: flex; gap: 12px; align-items: flex-end; margin-bottom:4px;}
     @media (max-width:600px) {.form-row-flex { flex-direction:column; align-items:stretch; gap:4px;} }
@@ -136,9 +158,15 @@
       font-size: 15px;
     }
     @media (max-width:600px) {.time-fields input[type="text"]{max-width: 100%;}}
-    .goal-btns {display:flex;gap:8px;justify-content:center;margin-top:12px;}
-    .goal-btns .primary, .goal-btns .danger {min-width:90px;border-radius:999px;}
-    .progress-wrap{margin-top:16px;}
+    .entry-submit-row {
+      display:flex;
+      justify-content:center;
+      margin-top:10px;
+      margin-bottom:0;
+    }
+    .entry-submit-row button {
+      max-width:220px;width:80%;font-size:16px;padding:15px 0;border-radius:12px;
+    }
     /* --- カード分割 --- */
     .flex-split {display:flex;flex-direction:row;gap:20px;}
     @media (max-width:900px) {.flex-split{flex-direction:column;gap:12px;}}
@@ -166,11 +194,42 @@
     .modal-content label{font-size:15px;color:var(--muted);}
     .modal-content select{margin-top:6px;}
     .modal-actions {display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
-    /* --- 過去目標リスト --- */
+    /* --- 目標履歴カード --- */
     .goal-list-card {margin-top:18px;}
-    .goal-list-card .item {margin-bottom:6px;}
-    .goal-list-card .chip{background:var(--muted);color:var(--bg);}
-    .goal-list-info{font-size:13px;color:var(--muted);}
+    .goal-hist-item {
+      background:var(--goalhist-bg);
+      border-radius:12px;
+      margin-bottom:12px;
+      padding:16px 15px 12px 15px;
+      box-shadow:0 2px 10px rgba(30,40,45,0.07);
+      border:1px solid rgba(100,150,110,0.10);
+      max-width:440px;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .goal-hist-period {
+      font-size:15px;font-weight:600;margin-bottom:0;
+      letter-spacing:0.2px;
+    }
+    .goal-hist-kpis {
+      display:flex;gap:18px;flex-wrap:wrap;font-size:14px;
+      margin:2px 0 0 2px;
+    }
+    .goal-hist-kpis .gh-kpi {color:var(--muted);}
+    .goal-hist-del-btn {
+      align-self:flex-end;
+      padding:2px 11px;
+      border-radius:8px;
+      background:var(--muted);
+      color:var(--bg);
+      border:none;
+      font-size:13px;
+      margin-top:4px;
+      transition:.2s;
+    }
+    .goal-hist-del-btn:hover {background:var(--danger);color:#fff;}
+    .footer-note{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 32px}
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
+    .toast.show{opacity:1}
   </style>
 </head>
 <body>
@@ -193,9 +252,9 @@
         <!-- カレンダー -->
         <div class="calendar-card">
           <div class="calendar-head">
-            <button id="prevMonth" class="tab-btn">←</button>
+            <button id="prevMonth" class="tab-btn" style="padding:3px 8px;">←</button>
             <div id="monthTitle" class="calendar-title-btn"></div>
-            <button id="nextMonth" class="tab-btn">→</button>
+            <button id="nextMonth" class="tab-btn" style="padding:3px 8px;">→</button>
           </div>
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
@@ -225,7 +284,9 @@
                 <span style="line-height:1.8;">～</span>
                 <input type="text" id="endTime" maxlength="5" placeholder="HH:MM">
               </div>
-              <button type="submit" class="primary" style="min-width:90px;margin-left:8px;">記録する</button>
+            </div>
+            <div class="entry-submit-row">
+              <button type="submit" class="primary">記録する</button>
             </div>
           </form>
         </div>
@@ -260,6 +321,7 @@
           <div><strong>目標期間</strong></div>
           <div class="hint" id="goalRangeHint"></div>
         </div>
+       
         <div class="progress" style="margin-top:8px">
           <div id="goalBar" style="height:10px;background:var(--accent);border-radius:8px;transition:.2s"></div>
         </div>
@@ -288,7 +350,7 @@
         <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
       </div>
     </section>
-    <div class="footer-note">v5.0 / ローカル動作</div>
+    <div class="footer-note">v6.0 / ローカル動作</div>
   </main>
   <div class="toast" id="toast">保存しました</div>
   <!-- 月選択モーダル -->
@@ -307,8 +369,8 @@
   </div>
   <script>
   (()=> {
-    // --- 基本ユーティリティ
-    const KEYS = {entries:'studyEntries_v5',cats:'studyCategories_v5',goals:'studyGoals_v5'};
+    // --- ユーティリティ
+    const KEYS = {entries:'studyEntries_v6',cats:'studyCategories_v6',goals:'studyGoals_v6'};
     const pad=n=>String(n).padStart(2,'0');
     const todayStr=()=>{const d=new Date();return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-');};
     const fmtDateLabel=d=>`${d.getFullYear()}年${d.getMonth()+1}月`;
@@ -318,10 +380,9 @@
     const load=(k,fallback)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??fallback}catch(e){return fallback}};
     const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
     let entries=load(KEYS.entries,[]),categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),goals=load(KEYS.goals,[]);
-    // 最新の目標
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
 
-    // --- タブ制御
+    // --- タブ
     const tabBtns=[...document.querySelectorAll('.tab-btn[data-tab]')];
     const sections={
       main:document.getElementById('tab-main'),
@@ -339,7 +400,7 @@
       const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;setTab(t.dataset.tab);
     });
 
-    // --- サマリー（メイン画面上部カード）
+    // --- サマリー
     function renderSummary() {
       const wrap = document.getElementById('summaryCard');
       if (!entries.length) {
@@ -357,7 +418,7 @@
         startDate = goal.start;
         const lastDate = todayStr();
         days = Math.max(1, Math.round((parseDateStr(lastDate) - parseDateStr(startDate))/86400000) + 1);
-        goalPeriod = `（目標期間：${goal.start}〜${goal.end}）`;
+        goalPeriod = `<span class="muted" style="font-size:12px;display:block;margin-top:3px;">目標期間：${goal.start}〜${goal.end}</span>`;
       }
       // 目標
       let tgt = 0, pct = 0, predict = '';
@@ -379,7 +440,10 @@
       wrap.innerHTML = `
         <div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${totalMin.toLocaleString()} m)</div>
         <div class="summary-list">
-          <div>記録開始から <span style="font-weight:600">${days}</span> 日間 ${goalPeriod}</div>
+          <div>
+            記録開始から <span style="font-weight:600">${days}</span> 日間
+            ${goalPeriod}
+          </div>
           <div>目標：${tgt?tgt/60+'h':'—'}（達成率${pct||0}%）</div>
           <div>目標到達予測：${predict||'—'}</div>
         </div>
@@ -412,7 +476,7 @@
       save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();renderAll();
     });
 
-    // --- カレンダー表示 + 月選択モーダル
+    // --- カレンダー + 日付詳細
     const dowRow=document.getElementById('dowRow'),monthGrid=document.getElementById('monthGrid'),monthTitle=document.getElementById('monthTitle'),prevMonthBtn=document.getElementById('prevMonth'),nextMonthBtn=document.getElementById('nextMonth'),dayDetails=document.getElementById('dayDetails');
     const DOW=['月','火','水','木','金','土','日'];
     let currentYM={y:new Date().getFullYear(),m:new Date().getMonth()};
@@ -433,13 +497,21 @@
       const d=e.target.closest('.day')?.dataset?.date;if(!d)return;
       const list=entries.filter(x=>x.date===d).sort((a,b)=>b.createdAt-a.createdAt),total=list.reduce((a,b)=>a+b.minutes,0);
       dayDetails.innerHTML=`
-        <div class="item"><div><strong>${d}</strong></div><div>合計 <strong>${(total/60).toFixed(1)}</strong>h (${total}m)</div></div>
-        ${list.map(e=>`<div class="item">
-        <div><span class="chip">${e.category}</span></div>
-        <div class="muted" style="font-size:13px">${e.minutes}m${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</div>
-        <button class="del-btn" data-del="${e.id}">×</button></div>`).join('')||`<div class="hint">記録なし</div>`}`;
+        <div class="day-detail-wrap">
+          <div class="day-detail-title">${d}</div>
+          <div class="day-detail-total">合計 <strong>${(total/60).toFixed(1)}</strong>h (${total}m)</div>
+          <div class="day-detail-list">
+            ${list.length?list.map(e=>`
+              <div class="rec-row">
+                <span class="chip muted">${e.category}</span>
+                <span style="font-size:13px;color:var(--muted)">${e.minutes}m${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</span>
+                <button class="del-btn" data-del="${e.id}">×</button>
+              </div>
+            `).join(''):`<div class="muted" style="padding:10px 0 0 4px;">記録なし</div>`}
+          </div>
+        </div>
+      `;
     });
-    // 削除機能（詳細画面からも可）
     dayDetails.addEventListener('click',e=>{
       const id=e.target?.dataset?.del;if(!id)return;
       entries=entries.filter(x=>String(x.id)!==String(id));save(KEYS.entries,entries);toast('削除しました');renderAll();
@@ -453,7 +525,6 @@
       showMonthModal(currentYM.y,currentYM.m);
     });
     function showMonthModal(selectedY,selectedM){
-      // 年セレクト: 過去5年+未来1年
       const y0=new Date().getFullYear();
       let yRange=[]; for(let y=y0-5;y<=y0+1;y++) yRange.push(y);
       let yearSel=document.getElementById('selectYear'),monthSel=document.getElementById('selectMonth');
@@ -476,7 +547,6 @@
       goalRangeHint=document.getElementById('goalRangeHint'),goalDaysLeft=document.getElementById('goalDaysLeft'),goalDeleteBtn=document.getElementById('goalDeleteBtn'),
       goalHistory=document.getElementById('goalHistory');
     function goalStats(g){
-      // 期間内累計と達成率
       const s=parseDateStr(g.start),e=parseDateStr(g.end);
       const accum=entries.filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e;}).reduce((a,b)=>a+b.minutes,0);
       const target=g.targetMin;
@@ -501,18 +571,20 @@
       goalPct.textContent=g?`${pct}%`:'—';
       goalDaysLeft.textContent=g?left:'';
     }
-    // 目標履歴（すべて表示・削除も可能、各達成状況も表示）
+    // 目標履歴
     function renderGoalHistory(){
       if(!goals.length){goalHistory.innerHTML='<div class="muted">目標履歴なし</div>';return;}
-      goalHistory.innerHTML='<h3 style="margin:8px 0;">過去の目標</h3>' +
+      goalHistory.innerHTML='<h3 style="margin:8px 0 6px 4px;">過去の目標</h3>' +
         goals.slice(0,-1).reverse().map((g,i)=>{
           const stats=goalStats(g);
-          return `<div class="item">
-            <div>
-              <span class="chip">${g.start}〜${g.end}</span>
-              <span class="goal-list-info">${(stats.accum/60).toFixed(1)}h / ${g.targetMin/60}h (${stats.pct}%)</span>
+          return `<div class="goal-hist-item">
+            <div class="goal-hist-period">${g.start}〜${g.end}</div>
+            <div class="goal-hist-kpis">
+              <span class="gh-kpi">累計: <b>${(stats.accum/60).toFixed(1)}h</b></span>
+              <span class="gh-kpi">目標: <b>${g.targetMin/60}h</b></span>
+              <span class="gh-kpi">達成率: <b>${stats.pct}%</b></span>
             </div>
-            <button class="del-btn" data-goaldel="${goals.length-2-i}">×</button>
+            <button class="goal-hist-del-btn" data-goaldel="${goals.length-2-i}">×</button>
           </div>`;
         }).join('');
     }
