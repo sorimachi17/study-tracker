@@ -60,7 +60,7 @@
     button.primary{background:var(--accent);color:white;border:none;font-weight:600}
     button.secondary{background:transparent}
     .inline{display:flex;gap:8px;align-items:center}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#10131a;border:1px solid rgba(255,255,255,.08);font-size:12px}
+    .chip{display:inline-block;min-width:60px;text-align:center;padding:5px 12px;border-radius:16px;background:var(--accent);color:#fff;font-size:13px;font-weight:500;margin-right:8px;}
     .muted{color:var(--muted)}
     .right{margin-left:auto}
     /* --- summary card --- */
@@ -90,37 +90,48 @@
     .lvl4{background:var(--lvl4)}
     .day.today{outline:2px solid var(--accent);outline-offset:0}
     .item{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0d0f15;}
+    .item .chip {margin:0;}
+    .item .del-btn {padding:4px 16px;min-width:60px;border-radius:10px;background:var(--danger);color:#fff;border:none;transition:.2s;}
+    .item .del-btn:hover {opacity:.8;}
     @media (prefers-color-scheme: light){.item{background:#fff;border-color:#e5e7eb}}
-    .item button.tab-btn[data-del]{padding:4px 8px;font-size:11px;}
     .footer-note{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 32px}
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
-    /* 記録フォームリファクタ */
-    .form-row-flex {
-      display: flex; gap: 12px; align-items: flex-end; margin-bottom:4px;
-    }
+    .form-row-flex {display: flex; gap: 12px; align-items: flex-end; margin-bottom:4px;}
     @media (max-width:600px) {.form-row-flex { flex-direction:column; align-items:stretch; gap:4px;} }
     .input-block { flex:1; }
-    .time-input-row {
-      display: flex; gap: 8px; align-items: center; margin-top: 6px;
-    }
+    .time-input-row {display: flex; gap: 8px; align-items: center; margin-top: 6px;}
     .time-input-row label { font-size:12px; color:var(--muted);}
-    .time-input-row input {
-      width: 110px; min-width: 80px; text-align:center;
-      padding:10px;
-    }
+    .time-input-row input {width: 110px; min-width: 80px; text-align:center;padding:10px;}
     @media (max-width:600px) {.time-input-row input{width:100%; min-width:0;}}
     /* 目標ボタン整列 */
-    .goal-btns {
-      display:flex;gap:8px;justify-content:center;margin-top:12px;
+    .goal-btns {display:flex;gap:8px;justify-content:center;margin-top:12px;}
+    .goal-btns .primary, .goal-btns .danger {min-width:90px;border-radius:999px;}
+    .progress-wrap{margin-top:16px;}
+    /* --- カード分割 --- */
+    .flex-split {display:flex;flex-direction:row;gap:20px;}
+    @media (max-width:900px) {.flex-split{flex-direction:column;gap:12px;}}
+    .calendar-card, .records-card {
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:10px 10px 10px 10px;
+      margin-bottom:10px;
+      min-width:300px;
+      flex:2 1 0;
     }
+    .records-card {max-width:420px;}
+    /* --- 過去目標リスト --- */
+    .goal-list-card {margin-top:18px;}
+    .goal-list-card .item {margin-bottom:6px;}
+    .goal-list-card .chip{background:var(--muted);color:var(--bg);}
   </style>
 </head>
 <body>
   <header>
     <h1>📘 勉強記録アプリ</h1>
     <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="month">月</button>
+      <button class="tab-btn active" data-tab="main">メイン</button>
       <button class="tab-btn" data-tab="goal">目標</button>
       <button class="tab-btn" data-tab="cats">カテゴリ</button>
       <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">📤</button>
@@ -129,46 +140,47 @@
     </div>
   </header>
   <main>
-    <section id="tab-month">
-      <!-- 総合サマリー -->
+    <!-- メイン画面 -->
+    <section id="tab-main">
       <div id="summaryCard" class="summary-card"></div>
-      <!-- カレンダー -->
-      <div class="calendar-head">
-        <button id="prevMonth" class="tab-btn">←</button>
-        <div id="monthTitle" style="font-weight:700"></div>
-        <button id="nextMonth" class="tab-btn">→</button>
-        <button id="thisMonth" class="tab-btn">今月</button>
-      </div>
-      <div class="calendar-grid" id="dowRow"></div>
-      <div class="calendar-grid" id="monthGrid"></div>
-      <div id="dayDetails" style="margin-top:10px"></div>
-      <!-- 記録フォーム -->
-      <form id="entryForm" style="margin-top:18px">
-        <div class="form-row-flex">
-          <div class="input-block">
-            <label>日付</label>
-            <input type="date" id="date" required>
+      <div class="flex-split">
+        <!-- カレンダー -->
+        <div class="calendar-card">
+          <div class="calendar-head">
+            <button id="prevMonth" class="tab-btn">←</button>
+            <div id="monthTitle" style="font-weight:700"></div>
+            <button id="nextMonth" class="tab-btn">→</button>
           </div>
-          <div class="input-block">
-            <label>カテゴリ</label>
-            <select id="category"></select>
-          </div>
-          <div class="input-block">
-            <label>時間（分）</label>
-            <input type="text" id="minutes" placeholder="例: 45" required autocomplete="off">
-          </div>
+          <div class="calendar-grid" id="dowRow"></div>
+          <div class="calendar-grid" id="monthGrid"></div>
+          <div id="dayDetails" style="margin-top:10px"></div>
         </div>
-        <div class="time-input-row">
-          <label>開始・終了時刻</label>
-          <input type="text" id="startTime" maxlength="5" placeholder="HH:MM">
-          <span>～</span>
-          <input type="text" id="endTime" maxlength="5" placeholder="HH:MM">
-          <button type="submit" class="primary" style="min-width:90px">記録する</button>
+        <!-- 記録入力 -->
+        <div class="records-card">
+          <form id="entryForm">
+            <div class="form-row-flex">
+              <div class="input-block">
+                <label>日付</label>
+                <input type="date" id="date" required>
+              </div>
+              <div class="input-block">
+                <label>カテゴリ</label>
+                <select id="category"></select>
+              </div>
+              <div class="input-block">
+                <label>勉強時間 (m)</label>
+                <input type="text" id="minutes" placeholder="例: 45" required autocomplete="off">
+              </div>
+            </div>
+            <div class="time-input-row">
+              <label>開始・終了時刻</label>
+              <input type="text" id="startTime" maxlength="5" placeholder="HH:MM">
+              <span>～</span>
+              <input type="text" id="endTime" maxlength="5" placeholder="HH:MM">
+              <button type="submit" class="primary" style="min-width:90px">記録する</button>
+            </div>
+          </form>
         </div>
-      </form>
-      <div style="margin-top:12px">
-        <strong>直近の記録</strong>
-        <div class="list" id="recentList"></div>
       </div>
     </section>
     <!-- 目標 -->
@@ -186,22 +198,22 @@
         </div>
         <div class="row" style="margin-top:8px">
           <div>
-            <label>目標時間（時間）</label>
+            <label>目標時間 (h)</label>
             <input type="number" id="goalHours" min="1" placeholder="例: 100" required>
           </div>
         </div>
         <div class="goal-btns">
           <button class="primary" type="submit">保存</button>
-          <button class="tab-btn danger" type="button" id="goalDeleteBtn">削除</button>
+          <button class="danger" type="button" id="goalDeleteBtn">削除</button>
         </div>
       </form>
-      <div class="progress-wrap" style="margin-top:12px">
+      <div class="progress-wrap">
         <div class="inline" style="justify-content:space-between">
-          <div><strong>目標達成率</strong></div>
+          <div><strong>目標期間</strong></div>
           <div class="hint" id="goalRangeHint"></div>
         </div>
         <div class="progress" style="margin-top:8px">
-          <div id="goalBar"></div>
+          <div id="goalBar" style="height:10px;background:var(--accent);border-radius:8px;transition:.2s"></div>
         </div>
         <div class="kpis">
           <div class="item"><div>累計</div><div id="goalAccum" style="font-weight:700"></div></div>
@@ -210,6 +222,7 @@
         </div>
         <div class="hint" id="goalDaysLeft" style="margin-top:6px"></div>
       </div>
+      <div class="goal-list-card" id="goalHistory"></div>
     </section>
     <!-- カテゴリ管理 -->
     <section id="tab-cats" style="display:none">
@@ -227,12 +240,16 @@
         <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
       </div>
     </section>
-    <div class="footer-note">v3.0 / ローカル動作</div>
+    <div class="footer-note">v4.0 / ローカル動作</div>
   </main>
   <div class="toast" id="toast">保存しました</div>
   <script>
   (()=> {
-    const KEYS = {entries:'studyEntries_v3',cats:'studyCategories_v3',goal:'studyGoal_v3'};
+    const KEYS = {
+      entries:'studyEntries_v4',
+      cats:'studyCategories_v4',
+      goals:'studyGoals_v4'
+    };
     const pad=n=>String(n).padStart(2,'0');
     const todayStr=()=>{const d=new Date();return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-');};
     const fmtDateLabel=d=>`${d.getFullYear()}年${d.getMonth()+1}月`;
@@ -241,39 +258,48 @@
     const toast=msg=>{const t=document.getElementById('toast');t.textContent=msg||'保存しました';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400);}
     const load=(k,fallback)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??fallback}catch(e){return fallback}};
     const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-    let entries=load(KEYS.entries,[]),categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),goal=load(KEYS.goal,null);
+    let entries=load(KEYS.entries,[]),categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),goals=load(KEYS.goals,[]);
+
+    // 最新の目標
+    const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
 
     // --- タブ
     const tabBtns=[...document.querySelectorAll('.tab-btn[data-tab]')];
     const sections={
-      month:document.getElementById('tab-month'),
+      main:document.getElementById('tab-main'),
       goal:document.getElementById('tab-goal'),
       cats:document.getElementById('tab-cats')
     };
     function setTab(name){
       for(const btn of tabBtns){btn.classList.toggle('active',btn.dataset.tab===name);}
       Object.entries(sections).forEach(([k,sec])=>{sec.style.display=(k===name)?'block':'none';});
-      if(name==='month') {renderSummary(); renderMonth();}
-      if(name==='goal') renderGoal();
+      if(name==='main') {renderSummary(); renderMonth();}
+      if(name==='goal') {renderGoal(); renderGoalHistory();}
       if(name==='cats') renderCats();
     }
     document.getElementById('tabs').addEventListener('click',e=>{
       const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;setTab(t.dataset.tab);
     });
 
-    // --- サマリー
+    // --- サマリー（メイン画面上部カード）
     function renderSummary() {
       const wrap = document.getElementById('summaryCard');
       if (!entries.length) {
         wrap.innerHTML = '<div class="muted">まだ記録がありません。</div>'; return;
       }
+      // 目標
+      const goal = latestGoal();
       // 合計
       const totalMin = entries.reduce((a,b)=>a+b.minutes,0);
       const totalH = (totalMin/60).toFixed(1);
-      // 開始日・日数
-      const dates = entries.map(e=>e.date).sort();
-      const firstDate = dates[0], lastDate = todayStr();
-      const days = ( (new Date(lastDate)-parseDateStr(firstDate)) / 86400000 ) + 1;
+      // 開始日・日数（目標開始日ベース）
+      let startDate = entries.map(e=>e.date).sort()[0];
+      let days = 1;
+      if(goal && goal.start){
+        startDate = goal.start;
+        const lastDate = todayStr();
+        days = Math.max(1, Math.round((parseDateStr(lastDate) - parseDateStr(startDate))/86400000) + 1);
+      }
       // 目標
       let tgt = 0, pct = 0, predict = '';
       if (goal) {
@@ -287,40 +313,27 @@
           const d = new Date();
           d.setDate(d.getDate()+estDays);
           predict = `${estDays}日後（${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}）`;
-        } else if (totalMin >= tgt) {
+        } else if (totalMin >= tgt && tgt > 0) {
           predict = '達成済み';
         }
       }
       wrap.innerHTML = `
-        <div class="summary-kpi">合計 ${totalMin.toLocaleString()} 分（${totalH} 時間）</div>
+        <div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${totalMin.toLocaleString()} m)</div>
         <div class="summary-list">
           <div>記録開始から <span style="font-weight:600">${days}</span> 日間</div>
-          <div>目標：${tgt?tgt.toLocaleString()+'分':'—'}（達成率${pct||0}%）</div>
+          <div>目標：${tgt?tgt/60+'h':'—'}（達成率${pct||0}%）</div>
           <div>目標到達予測：${predict||'—'}</div>
         </div>
       `;
     }
 
-    // --- カテゴリ
+    // --- カテゴリ選択
     const catSel=document.getElementById('category');
     function renderCategorySelect(){catSel.innerHTML='';categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});}
 
-    // --- 記録フォームと記録リスト
+    // --- 記録フォーム
     const form=document.getElementById('entryForm'),dateEl=document.getElementById('date'),minEl=document.getElementById('minutes'),
-      startEl=document.getElementById('startTime'),endEl=document.getElementById('endTime'),recentList=document.getElementById('recentList');
-
-    function renderRecent(){
-      const last=[...entries].sort((a,b)=>b.createdAt-a.createdAt).slice(0,10);
-      recentList.innerHTML=last.map(e=>`<div class="item"><div><div><strong>${e.date}</strong> <span class="chip">${e.category}</span></div>
-        <div class="muted" style="font-size:12px">${e.minutes}分${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</div>
-        </div>
-        <button class="tab-btn" data-del="${e.id}">削除</button>
-      </div>`).join('')||`<div class="hint">まだ記録がありません。</div>`;
-    }
-    recentList.addEventListener('click',e=>{
-      const id=e.target?.dataset?.del;if(!id)return;
-      entries=entries.filter(x=>String(x.id)!==String(id));save(KEYS.entries,entries);toast('削除しました');renderAll();
-    });
+      startEl=document.getElementById('startTime'),endEl=document.getElementById('endTime');
 
     // 記録フォーム: 時間を入力したら開始・終了自動補完（本日なら現在時刻推定）
     function estimateTimes(){
@@ -342,8 +355,8 @@
       save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();renderAll();
     });
 
-    // --- カレンダー
-    const dowRow=document.getElementById('dowRow'),monthGrid=document.getElementById('monthGrid'),monthTitle=document.getElementById('monthTitle'),prevMonthBtn=document.getElementById('prevMonth'),nextMonthBtn=document.getElementById('nextMonth'),thisMonthBtn=document.getElementById('thisMonth'),dayDetails=document.getElementById('dayDetails');
+    // --- カレンダー表示
+    const dowRow=document.getElementById('dowRow'),monthGrid=document.getElementById('monthGrid'),monthTitle=document.getElementById('monthTitle'),prevMonthBtn=document.getElementById('prevMonth'),nextMonthBtn=document.getElementById('nextMonth'),dayDetails=document.getElementById('dayDetails');
     const DOW=['月','火','水','木','金','土','日'];
     let currentYM={y:new Date().getFullYear(),m:new Date().getMonth()};
     function renderMonth(){
@@ -355,42 +368,80 @@
       monthGrid.innerHTML=blanks+Array.from({length:lastDate},(_,i)=>{
         const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`,sum=totals[key]||0;
         const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));const isToday=key===todayStr();
-        return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?sum+'分':''}</div></div>`;
+        return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?sum+'m':''}</div></div>`;
       }).join('');
-      dayDetails.innerHTML=`<div class="hint">日付をタップすると、その日の詳細が表示されます。</div>`;
+      dayDetails.innerHTML='';
     }
     monthGrid.addEventListener('click',e=>{
       const d=e.target.closest('.day')?.dataset?.date;if(!d)return;
       const list=entries.filter(x=>x.date===d).sort((a,b)=>b.createdAt-a.createdAt),total=list.reduce((a,b)=>a+b.minutes,0);
       dayDetails.innerHTML=`
-        <div class="item"><div><strong>${d}</strong></div><div>合計 <strong>${total}</strong> 分</div></div>
-        ${list.map(e=>`<div class="item"><div><span class="chip">${e.category}</span></div><div class="muted" style="font-size:12px">${e.minutes}分${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</div>
-        <button class="tab-btn" data-del="${e.id}">削除</button></div>`).join('')||`<div class="hint">記録なし</div>`}`;
+        <div class="item"><div><strong>${d}</strong></div><div>合計 <strong>${(total/60).toFixed(1)}</strong>h (${total}m)</div></div>
+        ${list.map(e=>`<div class="item"><div><span class="chip">${e.category}</span></div>
+        <div class="muted" style="font-size:13px">${e.minutes}m${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</div>
+        <button class="del-btn" data-del="${e.id}">削除</button></div>`).join('')||`<div class="hint">記録なし</div>`}`;
     });
+    // 削除機能（詳細画面からも可）
+    dayDetails.addEventListener('click',e=>{
+      const id=e.target?.dataset?.del;if(!id)return;
+      entries=entries.filter(x=>String(x.id)!==String(id));save(KEYS.entries,entries);toast('削除しました');renderAll();
+    });
+
     prevMonthBtn.addEventListener('click',()=>{if(currentYM.m===0){currentYM.y--;currentYM.m=11;}else currentYM.m--;renderMonth();});
     nextMonthBtn.addEventListener('click',()=>{if(currentYM.m===11){currentYM.y++;currentYM.m=0;}else currentYM.m++;renderMonth();});
-    thisMonthBtn.addEventListener('click',()=>{const d=new Date();currentYM={y:d.getFullYear(),m:d.getMonth()};renderMonth();});
 
-    // --- 目標
+    // --- 目標管理
     const goalForm=document.getElementById('goalForm'),goalStart=document.getElementById('goalStart'),goalEnd=document.getElementById('goalEnd'),goalHours=document.getElementById('goalHours'),
       goalBar=document.getElementById('goalBar'),goalAccum=document.getElementById('goalAccum'),goalTarget=document.getElementById('goalTarget'),goalPct=document.getElementById('goalPct'),
-      goalRangeHint=document.getElementById('goalRangeHint'),goalDaysLeft=document.getElementById('goalDaysLeft'),goalDeleteBtn=document.getElementById('goalDeleteBtn');
+      goalRangeHint=document.getElementById('goalRangeHint'),goalDaysLeft=document.getElementById('goalDaysLeft'),goalDeleteBtn=document.getElementById('goalDeleteBtn'),
+      goalHistory=document.getElementById('goalHistory');
+
+    // 最新目標のみフォームに反映
     function renderGoal(){
-      if(goal){goalStart.value=goal.start;goalEnd.value=goal.end;goalHours.value=Math.round(goal.targetMin/60);}
-      goalRangeHint.textContent=goal?`${goal.start}〜${goal.end}`:'未設定';
+      const g = latestGoal();
+      if(g){goalStart.value=g.start;goalEnd.value=g.end;goalHours.value=Math.round(g.targetMin/60);}
+      else{goalStart.value='';goalEnd.value='';goalHours.value='';}
+      goalRangeHint.textContent=g?`${g.start}〜${g.end}`:'未設定';
       let accum=0,target=0,pct=0,left='';
-      if(goal){const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
+      if(g){const s=parseDateStr(g.start),e=parseDateStr(g.end);
         accum=entries.filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e;}).reduce((a,b)=>a+b.minutes,0);
-        target=goal.targetMin;pct=Math.min(100,Math.round((accum/Math.max(1,target))*100));const daysLeft=Math.max(0,Math.ceil((e-new Date())/86400000));left=`終了まで残り ${daysLeft} 日`;}
-      goalBar.style.width=pct+'%';goalAccum.textContent=`${accum.toLocaleString()} 分`;goalTarget.textContent=target?`${target.toLocaleString()} 分`:'—';goalPct.textContent=target?`${pct}%`:'—';goalDaysLeft.textContent=left;
+        target=g.targetMin;
+        pct=Math.min(100,Math.round((accum/Math.max(1,target))*100));
+        const daysLeft=Math.max(0,Math.ceil((e-new Date())/86400000));
+        left=`終了まで残り ${daysLeft} 日`;
+      }
+      goalBar.style.width=pct+'%';
+      goalAccum.textContent=g?`${(accum/60).toFixed(1)}h (${accum}m)`:'—';
+      goalTarget.textContent=g?`${(target/60).toFixed(1)}h (${target}m)`:'—';
+      goalPct.textContent=g?`${pct}%`:'—';
+      goalDaysLeft.textContent=g?left:'';
     }
+    // 目標履歴（すべて表示・削除も可能）
+    function renderGoalHistory(){
+      if(!goals.length){goalHistory.innerHTML='<div class="muted">目標履歴なし</div>';return;}
+      goalHistory.innerHTML='<h3 style="margin:8px 0;">過去の目標</h3>' + goals.slice(0,-1).reverse().map((g,i)=>
+        `<div class="item">
+          <div><span class="chip">${g.start}〜${g.end}</span> ${g.targetMin/60}h</div>
+          <button class="del-btn" data-goaldel="${goals.length-2-i}">削除</button>
+        </div>`).join('');
+    }
+    goalHistory.addEventListener('click',e=>{
+      const idx=e.target?.dataset?.goaldel;
+      if(idx!==undefined){
+        goals.splice(idx,1); save(KEYS.goals,goals); renderGoalHistory(); toast('削除しました');
+      }
+    });
+
     goalForm.addEventListener('submit',e=>{
       e.preventDefault();const start=goalStart.value,end=goalEnd.value,hours=Number(goalHours.value||0);if(!start||!end||!hours)return;
-      goal={start,end,targetMin:hours*60};save(KEYS.goal,goal);toast('保存');renderGoal();
+      goals.push({start,end,targetMin:hours*60});
+      save(KEYS.goals,goals);toast('保存');renderGoal();renderGoalHistory();
     });
     goalDeleteBtn.addEventListener('click',()=>{
-      if(!confirm('目標を削除しますか？'))return;
-      localStorage.removeItem(KEYS.goal);goal=null;renderGoal();
+      if(!goals.length) return;
+      if(!confirm('最新の目標を削除しますか？'))return;
+      goals.pop();
+      save(KEYS.goals,goals);renderGoal();renderGoalHistory();
     });
 
     // --- カテゴリ管理
@@ -420,14 +471,14 @@
     });
     resetData.addEventListener('click',()=>{
       if(!confirm('本当に全データ（記録・カテゴリ・目標）を削除しますか？'))return;
-      localStorage.removeItem(KEYS.entries);localStorage.removeItem(KEYS.cats);localStorage.removeItem(KEYS.goal);
-      entries=[];categories=['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング'];goal=null;
+      localStorage.removeItem(KEYS.entries);localStorage.removeItem(KEYS.cats);localStorage.removeItem(KEYS.goals);
+      entries=[];categories=['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング'];goals=[];
       save(KEYS.cats,categories);renderAll();toast('初期化しました');
     });
 
     // --- JSONエクスポート/インポート
     document.getElementById('exportBtn').addEventListener('click',()=>{
-      const data={entries,categories,goal,exportedAt:new Date().toISOString()};
+      const data={entries,categories,goals,exportedAt:new Date().toISOString()};
       const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);
       a.download=`study_backup_${Date.now()}.json`;a.click();URL.revokeObjectURL(a.href);
@@ -436,13 +487,13 @@
     document.getElementById('importFile').addEventListener('change',async()=>{
       const f=document.getElementById('importFile').files[0];if(!f)return;const text=await f.text();
       try{const data=JSON.parse(text);if(!data||!Array.isArray(data.entries))throw new Error('不正な形式');
-        entries=data.entries;categories=data.categories||categories;goal=data.goal||null;
-        save(KEYS.entries,entries);save(KEYS.cats,categories);save(KEYS.goal,goal);renderAll();toast('読み込みました');
+        entries=data.entries;categories=data.categories||categories;goals=data.goals||[];
+        save(KEYS.entries,entries);save(KEYS.cats,categories);save(KEYS.goals,goals);renderAll();toast('読み込みました');
       }catch(err){alert('読み込みに失敗:'+err.message);}finally{document.getElementById('importFile').value='';}
     });
 
-    // --- まとめ
-    function renderAll(){renderCategorySelect();renderRecent();renderSummary();renderMonth();renderGoal();renderCats();}
+    // --- 全体レンダリング
+    function renderAll(){renderCategorySelect();renderSummary();renderMonth();renderGoal();renderGoalHistory();renderCats();}
     function init(){dateEl.value=todayStr();estimateTimes();renderAll();}
     init();
 
