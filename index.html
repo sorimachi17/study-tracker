@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>勉強記録（ローカル）</title>
 <style>
   :root{
@@ -38,12 +38,14 @@
   }
 
   *{box-sizing:border-box}
+  html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
   body{
     margin:0;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     color:var(--text);
     background:var(--bg);
     line-height:1.5;
+    overscroll-behavior-y: contain;
   }
   header{
     position:sticky; top:0; z-index:5;
@@ -52,7 +54,7 @@
     border-bottom:1px solid rgba(255,255,255,.06);
   }
   h1{margin:0; font-size:18px}
-  .sub{color:var(--muted); font-size:12px}
+  .sub{color:var(--muted); font-size:12px; display:none } /* 不要表示を非表示 */
 
   .tabs{
     display:flex; gap:8px; margin-top:8px; overflow:auto; padding-bottom:4px;
@@ -62,14 +64,17 @@
     border:1px solid rgba(255,255,255,.12);
     background:var(--card);
     color:var(--text);
-    padding:8px 12px; border-radius:999px; font-size:13px;
+    padding:10px 14px; border-radius:999px; font-size:16px; /* 16px以上でiOSのズーム防止 */
+    touch-action:manipulation; outline:none;
   }
+  .tab-btn:focus{outline:none}
   .tab-btn.active{border-color:var(--accent); box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
   main{padding:12px; max-width:980px; margin:0 auto}
   section{
     background:var(--card);
     border:1px solid rgba(255,255,255,.08);
     border-radius:12px; padding:12px; margin-bottom:12px;
+    scroll-margin-top: 72px; /* ヘッダー分の余白 */
   }
   .row{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   @media (max-width:640px){ .row{grid-template-columns:1fr} }
@@ -78,13 +83,15 @@
   input, select, button, textarea{
     width:100%; padding:12px; border-radius:10px;
     border:1px solid rgba(255,255,255,.12);
-    background:#0e1016; color:var(--text); font-size:15px;
+    background:#0e1016; color:var(--text); font-size:16px; /* 16px以上でiOSのズーム防止 */
+    outline:none;
   }
   @media (prefers-color-scheme: light){
     input, select, button, textarea{background:#fff; color:#111; border-color:#e5e7eb}
   }
   button.primary{background:var(--accent); color:white; border:none; font-weight:600}
   button.secondary{background:transparent}
+  .btn-sm{padding:6px 8px; font-size:12px} /* 小型ボタン */
   .inline{display:flex; gap:8px; align-items:center}
   .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#10131a; border:1px solid rgba(255,255,255,.08); font-size:12px}
   .muted{color:var(--muted)}
@@ -116,13 +123,12 @@
   .day.today{outline:2px solid var(--accent); outline-offset:0}
 
   /* 週バー */
-  .bars{display:flex; gap:8px; align-items:flex-end; height:160px; padding:8px 4px; border-radius:10px; background:#0e1118; border:1px solid rgba(255,255,255,.06)}
+  .bars{display:flex; gap:8px; align-items:flex-end; height:180px; padding:8px 4px; border-radius:10px; background:#0e1118; border:1px solid rgba(255,255,255,.06)}
   @media (prefers-color-scheme: light){ .bars{background:#fff; border-color:#e5e7eb} }
   .bar{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px}
+  .bar .val{font-size:11px}
   .bar .col{width:100%; border-radius:6px; background:var(--accent); min-height:2px}
   .bar label{font-size:11px; text-align:center}
-  .legend{display:flex; gap:6px; align-items:center; font-size:12px}
-  .swatch{width:14px; height:14px; border-radius:4px}
 
   .list{display:flex; flex-direction:column; gap:8px}
   .item{display:flex; gap:8px; align-items:center; justify-content:space-between; padding:10px; border:1px solid rgba(255,255,255,.08); border-radius:10px; background:#0d0f15}
@@ -145,12 +151,12 @@
 <body>
   <header>
     <h1>📘 勉強記録</h1>
-    <div class="sub">ローカル保存（削除しない限り消えません）</div>
+    <!-- まさの要望により、ローカル保存の注意書きを非表示化 -->
     <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="input">記録</button>
-      <button class="tab-btn" data-tab="month">月</button>
+      <button class="tab-btn" data-tab="input">記録</button>
+      <button class="tab-btn active" data-tab="month">月</button>
       <button class="tab-btn" data-tab="week">週</button>
-      <button class="tab-btn" data-tab="day">日</button>
+      <!-- 日タブは不要のため削除 -->
       <button class="tab-btn" data-tab="goal">目標</button>
       <button class="tab-btn" data-tab="cats">カテゴリ</button>
       <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">📤</button>
@@ -160,7 +166,22 @@
   </header>
 
   <main>
-    <!-- 入力 -->
+    <!-- 月カレンダー（メイン画面） -->
+    <section id="tab-month">
+      <div class="calendar-head">
+        <button id="prevMonth" class="tab-btn btn-sm">←</button>
+        <div id="monthTitle" style="font-weight:700"></div>
+        <button id="nextMonth" class="tab-btn btn-sm">→</button>
+        <button id="thisMonth" class="tab-btn btn-sm">今月</button>
+        <!-- 凡例は不要のため削除 -->
+      </div>
+      <div class="calendar-grid" id="dowRow"></div>
+      <div class="calendar-grid" id="monthGrid"></div>
+
+      <div id="dayDetails" style="margin-top:10px"></div>
+    </section>
+
+    <!-- 入力（「月」画面の下に配置。記録タップでここへスクロール） -->
     <section id="tab-input">
       <form id="entryForm">
         <div class="row">
@@ -170,7 +191,8 @@
           </div>
           <div>
             <label>時間（分）</label>
-            <input type="number" id="minutes" inputmode="numeric" min="1" placeholder="例: 45" required>
+            <!-- 数字キーボードを避けたい要望により text に変更 -->
+            <input type="text" id="minutes" placeholder="例: 45" required>
           </div>
         </div>
 
@@ -179,49 +201,33 @@
             <label>カテゴリ</label>
             <select id="category"></select>
           </div>
-          <div>
-            <label class="inline">
-              <input type="checkbox" id="estimateToggle" style="width:auto"> <span>現在時刻から開始時刻を推定</span>
-            </label>
-            <div id="estimateView" class="hint"></div>
+          <div class="inline" style="align-items:end">
+            <!-- 推定UIは表示せず、デフォルトで推定 → 下の時刻入力に反映。手動編集可 -->
+            <div class="row" style="width:100%">
+              <div>
+                <label>開始時刻</label>
+                <input type="time" id="startTime">
+              </div>
+              <div>
+                <label>終了時刻</label>
+                <input type="time" id="endTime">
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="row" style="margin-top:8px">
           <div><button type="submit" class="primary">記録する</button></div>
-          <div><button type="button" id="todayBtn" class="secondary">今日（日時）にセット</button></div>
+          <!-- 「今日にセット」ボタンは不要のため削除 -->
         </div>
       </form>
 
-      <div style="margin-top:12px" class="hint">
-        ✅ 記録後は下のカレンダー・集計が自動更新されます。
-      </div>
+      <!-- 自動更新の注意書きは不要のため削除 -->
 
       <div style="margin-top:12px">
         <strong>直近の記録</strong>
         <div class="list" id="recentList"></div>
       </div>
-    </section>
-
-    <!-- 月カレンダー -->
-    <section id="tab-month" style="display:none">
-      <div class="calendar-head">
-        <button id="prevMonth" class="tab-btn">←</button>
-        <div id="monthTitle" style="font-weight:700"></div>
-        <button id="nextMonth" class="tab-btn">→</button>
-        <button id="thisMonth" class="tab-btn">今月</button>
-        <div class="legend right">
-          <span class="swatch lvl0"></span><span class="hint">0分</span>
-          <span class="swatch lvl1"></span><span class="hint">少</span>
-          <span class="swatch lvl2"></span><span class="hint">中</span>
-          <span class="swatch lvl3"></span><span class="hint">多</span>
-          <span class="swatch lvl4"></span><span class="hint">特多</span>
-        </div>
-      </div>
-      <div class="calendar-grid" id="dowRow"></div>
-      <div class="calendar-grid" id="monthGrid"></div>
-
-      <div id="dayDetails" style="margin-top:10px"></div>
     </section>
 
     <!-- 週集計 -->
@@ -232,17 +238,6 @@
       </div>
       <div class="bars" id="weekBars" style="margin-top:8px"></div>
       <div class="list" id="weekTable" style="margin-top:8px"></div>
-    </section>
-
-    <!-- 日集計 -->
-    <section id="tab-day" style="display:none">
-      <div class="inline" style="gap:8px">
-        <strong>直近14日</strong>
-        <select id="dayCatFilter" style="max-width:220px">
-          <option value="">（全カテゴリ）</option>
-        </select>
-      </div>
-      <div class="list" id="dayList" style="margin-top:8px"></div>
     </section>
 
     <!-- 目標 -->
@@ -263,8 +258,9 @@
             <label>目標時間（時間）</label>
             <input type="number" id="goalHours" min="1" placeholder="例: 100" required>
           </div>
-          <div style="align-self:end">
+          <div style="align-self:end" class="inline">
             <button class="primary" type="submit">目標を保存</button>
+            <button class="tab-btn btn-sm danger" id="deleteGoal" type="button" title="目標を削除">削除</button>
           </div>
         </div>
       </form>
@@ -310,11 +306,11 @@
 
       <div class="inline" style="margin-top:12px; gap:8px">
         <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
-        <div class="hint">※ 取り消しできません。JSONでバックアップを推奨 → 右上の📤</div>
+        <!-- 下の注意書きは不要のため削除 -->
       </div>
     </section>
 
-    <div class="footer-note">v1.0 / すべてブラウザ内で動作</div>
+    <div class="footer-note">v1.1 / すべてブラウザ内で動作</div>
   </main>
 
   <div class="toast" id="toast">保存しました</div>
@@ -332,13 +328,12 @@
   const todayStr = () => {
     const d = new Date(); return [d.getFullYear(), pad(d.getMonth()+1), pad(d.getDate())].join('-');
   };
-  const fmtDateLabel = (d) => `${d.getFullYear()}年${d.getMonth()+1}月`;
+  const fmtDateLabel = (d) => \`\${d.getFullYear()}年\${d.getMonth()+1}月\`;
   const parseDateStr = (s) => { // safe local midnight
     const [y,m,d] = s.split('-').map(Number);
     return new Date(y, m-1, d, 0,0,0,0);
   };
-  const sameDayStr = (a, b) => a === b;
-  const dateToStr = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const dateToStr = (d) => \`\${d.getFullYear()}-\${pad(d.getMonth()+1)}-\${pad(d.getDate())}\`;
   const mondayOf = (d) => {
     const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const w = (t.getDay() + 6) % 7; // Mon=0
@@ -349,7 +344,7 @@
 
   const toast = (msg='保存しました')=>{
     const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 1500);
+    setTimeout(()=>t.classList.remove('show'), 1200);
   };
 
   /*** ストレージ ***/
@@ -373,7 +368,6 @@
     input: document.getElementById('tab-input'),
     month: document.getElementById('tab-month'),
     week:  document.getElementById('tab-week'),
-    day:   document.getElementById('tab-day'),
     goal:  document.getElementById('tab-goal'),
     cats:  document.getElementById('tab-cats'),
   };
@@ -383,9 +377,9 @@
   const dateEl = document.getElementById('date');
   const minEl = document.getElementById('minutes');
   const catSel = document.getElementById('category');
-  const estToggle = document.getElementById('estimateToggle');
-  const estView = document.getElementById('estimateView');
-  const todayBtn = document.getElementById('todayBtn');
+  const startTimeEl = document.getElementById('startTime');
+  const endTimeEl = document.getElementById('endTime');
+  let manualTimes = false; // 手動編集済みなら推定で上書きしない
   const recentList = document.getElementById('recentList');
 
   /* 月カレンダー */
@@ -396,20 +390,19 @@
   const nextMonthBtn = document.getElementById('nextMonth');
   const thisMonthBtn = document.getElementById('thisMonth');
   const dayDetails = document.getElementById('dayDetails');
-  const DOW = ['月','火','水','木','金','土','日'];
+  const DOW = ['月','火','水','木','金','土','日']
 
-  /* 週・日 */
+  /* 週 */
   const weekBars = document.getElementById('weekBars');
   const weekTable = document.getElementById('weekTable');
   const weekTotalHint = document.getElementById('weekTotalHint');
-  const dayCatFilter = document.getElementById('dayCatFilter');
-  const dayList = document.getElementById('dayList');
 
   /* 目標 */
   const goalForm = document.getElementById('goalForm');
   const goalStart = document.getElementById('goalStart');
   const goalEnd = document.getElementById('goalEnd');
   const goalHours = document.getElementById('goalHours');
+  const deleteGoalBtn = document.getElementById('deleteGoal');
   const goalBar = document.getElementById('goalBar');
   const goalAccum = document.getElementById('goalAccum');
   const goalTarget = document.getElementById('goalTarget');
@@ -430,17 +423,36 @@
 
   /*** タブ ***/
   function setTab(name){
-    for(const btn of tabBtns){ btn.classList.toggle('active', btn.dataset.tab===name); }
-    Object.entries(sections).forEach(([k,sec])=>{ sec.style.display = (k===name)?'block':'none'; });
-    if(name==='month') renderMonth();
-    if(name==='week')  renderWeek();
-    if(name==='day')   renderDay();
-    if(name==='goal')  renderGoal();
-    if(name==='cats')  renderCats();
+    for(const btn of tabBtns){
+      // 記録は擬似タブなのでactiveは月に合わせる
+      const isActive = (name==='month' && btn.dataset.tab==='month') ||
+                       (name!=='month' && btn.dataset.tab===name);
+      btn.classList.toggle('active', isActive);
+    }
+    // まず全部隠す
+    Object.values(sections).forEach(sec => sec.style.display = 'none');
+    // 月タブのときは「月」と「入力」を縦に並べて表示
+    if(name==='month'){
+      sections.month.style.display = 'block';
+      sections.input.style.display = 'block';
+      renderMonth();
+    }else{
+      sections[name].style.display = 'block';
+      if(name==='week')  renderWeek();
+      if(name==='goal')  renderGoal();
+      if(name==='cats')  renderCats();
+    }
   }
   tabsEl.addEventListener('click', (e)=>{
     const t = e.target.closest('.tab-btn[data-tab]'); if(!t) return;
-    setTab(t.dataset.tab);
+    const name = t.dataset.tab;
+    if(name==='input'){
+      // 記録ボタンは月タブを表示して入力へスクロール
+      setTab('month');
+      document.getElementById('tab-input').scrollIntoView({behavior:'smooth', block:'start'});
+      return;
+    }
+    setTab(name);
   });
 
   /*** 入力レンダリング ***/
@@ -449,20 +461,19 @@
     categories.forEach(c=>{
       const opt=document.createElement('option'); opt.value=c; opt.textContent=c; catSel.appendChild(opt);
     });
-    // 日集計フィルタも更新
-    dayCatFilter.innerHTML = '<option value="">（全カテゴリ）</option>' + categories.map(c=>`<option>${c}</option>`).join('');
   }
   function renderRecent(){
     const last = [...entries].sort((a,b)=> b.createdAt - a.createdAt).slice(0,10);
     recentList.innerHTML = last.map(e=>{
-      return `<div class="item">
+      const timeText = (e.startTime && e.endTime) ? \`（\${e.startTime}→\${e.endTime}）\` : '';
+      return \`<div class="item">
         <div>
-          <div><strong>${e.date}</strong> <span class="chip">${e.category}</span></div>
-          <div class="muted" style="font-size:12px">${e.minutes} 分${e.estimate ? `（推定 ${e.startTime}→${e.endTime}）` : ''}</div>
+          <div><strong>\${e.date}</strong> <span class="chip">\${e.category}</span></div>
+          <div class="muted" style="font-size:12px">\${e.minutes} 分 \${timeText}</div>
         </div>
-        <button class="tab-btn" data-del="${e.id}">削除</button>
-      </div>`;
-    }).join('') || `<div class="hint">まだ記録がありません。</div>`;
+        <button class="tab-btn btn-sm danger" data-del="\${e.id}">削除</button>
+      </div>\`;
+    }).join('') || \`<div class="hint">まだ記録がありません。</div>\`;
   }
   recentList.addEventListener('click', (e)=>{
     const id = e.target?.dataset?.del; if(!id) return;
@@ -471,48 +482,50 @@
     renderAll();
   });
 
+  function hhmm(d){ return \`\${pad(d.getHours())}:\${pad(d.getMinutes())}\`; }
+
   function estimateTimes(){
-    const mins = Number(minEl.value||0);
-    if(!estToggle.checked || !mins){ estView.textContent=''; return; }
-    if(dateEl.value !== todayStr()){
-      estView.textContent='※ 推定は「今日」を選んだときのみ表示します。';
-      return;
-    }
+    // minutes と 日付が今日の場合に、現在時刻から逆算。手動編集済みなら上書きしない。
+    const minsRaw = (minEl.value || '').trim();
+    const mins = parseInt(minsRaw, 10);
+    if(!Number.isFinite(mins) || mins<=0) return;
+    if(dateEl.value !== todayStr()) return;
+    if(manualTimes) return;
     const end = new Date();
     const start = new Date(end.getTime() - mins*60000);
-    const fmt = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    estView.textContent = `推定: ${fmt(start)} → ${fmt(end)}`;
+    startTimeEl.value = hhmm(start);
+    endTimeEl.value   = hhmm(end);
   }
-  estToggle.addEventListener('change', estimateTimes);
   minEl.addEventListener('input', estimateTimes);
-  dateEl.addEventListener('change', estimateTimes);
-  todayBtn.addEventListener('click', ()=>{
-    dateEl.value = todayStr();
-    minEl.focus();
-    estimateTimes();
-  });
+  dateEl.addEventListener('change', ()=>{ manualTimes=false; estimateTimes(); });
+  startTimeEl.addEventListener('input', ()=>{ manualTimes = true; });
+  endTimeEl.addEventListener('input',   ()=>{ manualTimes = true; });
 
   form.addEventListener('submit', (e)=>{
     e.preventDefault();
-    const minutes = Number(minEl.value);
-    if(!minutes || minutes<=0) return;
+    const minutes = parseInt((minEl.value||'').trim(), 10);
+    if(!Number.isFinite(minutes) || minutes<=0) return;
+
+    // 推定が未確定ならここで一度だけ自動算出
+    if(!manualTimes && (!startTimeEl.value || !endTimeEl.value) && dateEl.value === todayStr()){
+      estimateTimes();
+    }
+
     const rec = {
       id: Date.now().toString(36),
       date: dateEl.value || todayStr(),
       minutes,
       category: catSel.value,
       createdAt: Date.now(),
-      estimate: !!estToggle.checked
+      startTime: startTimeEl.value || null,
+      endTime:   endTimeEl.value   || null
     };
-    if(rec.estimate && sameDayStr(rec.date, todayStr())){
-      const end = new Date();
-      const start = new Date(end.getTime() - minutes*60000);
-      rec.startTime = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
-      rec.endTime   = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
-    }
     entries.push(rec);
     save(KEYS.entries, entries);
-    minEl.value=''; estimateTimes();
+
+    // 入力クリア（時刻は継続利用しない）
+    minEl.value = '';
+    if(dateEl.value===todayStr()){ manualTimes=false; estimateTimes(); } else { startTimeEl.value = ''; endTimeEl.value=''; manualTimes=false; }
     toast();
     renderAll();
   });
@@ -521,7 +534,7 @@
   let currentYM = {y: new Date().getFullYear(), m: new Date().getMonth()};
   function renderMonth(){
     // 曜日ヘッダ（Mon〜Sun）
-    dowRow.innerHTML = DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+    dowRow.innerHTML = DOW.map(d=>\`<div class="dow">\${d}</div>\`).join('');
 
     const y = currentYM.y, m = currentYM.m;
     monthTitle.textContent = fmtDateLabel(new Date(y,m,1));
@@ -531,7 +544,7 @@
     const totals = {};
     let monthMax = 0;
     for(let d=1; d<=lastDate; d++){
-      const key = `${y}-${pad(m+1)}-${pad(d)}`;
+      const key = \`\${y}-\${pad(m+1)}-\${pad(d)}\`;
       const sum = entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
       totals[key] = sum; monthMax = Math.max(monthMax, sum);
     }
@@ -539,36 +552,42 @@
     const blanks = Array.from({length:firstDow}, ()=>'<div></div>').join('');
 
     monthGrid.innerHTML = blanks + Array.from({length:lastDate}, (_,i)=>{
-      const d=i+1, key = `${y}-${pad(m+1)}-${pad(d)}`, sum = totals[key]||0;
+      const d=i+1, key = \`\${y}-\${pad(m+1)}-\${pad(d)}\`, sum = totals[key]||0;
       const level = sum===0 ? 0 : Math.min(4, Math.ceil((sum/(monthMax||1))*4));
       const isToday = key===todayStr();
-      return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}">
-        <div class="num">${d}</div>
-        <div class="mins">${sum? sum+'分':''}</div>
-      </div>`;
+      return \`<div class="day lvl\${level} \${isToday?'today':''}" data-date="\${key}">
+        <div class="num">\${d}</div>
+        <div class="mins">\${sum? sum+'分':''}</div>
+      </div>\`;
     }).join('');
 
-    dayDetails.innerHTML = `<div class="hint">日付をタップすると、その日の詳細が表示されます。</div>`;
+    dayDetails.innerHTML = \`<div class="hint">日付をタップすると、その日の詳細が表示されます。</div>\`;
   }
   monthGrid.addEventListener('click', (e)=>{
     const d = e.target.closest('.day')?.dataset?.date; if(!d) return;
     const list = entries.filter(x=>x.date===d).sort((a,b)=>b.createdAt-a.createdAt);
     const total = list.reduce((a,b)=>a+b.minutes,0);
-    dayDetails.innerHTML = `
+    dayDetails.innerHTML = \`
       <div class="item">
-        <div><strong>${d}</strong></div>
-        <div>合計 <strong>${total}</strong> 分</div>
+        <div><strong>\${d}</strong></div>
+        <div>合計 <strong>\${total}</strong> 分</div>
       </div>
-      ${ list.map(e=>`
+      \${ list.map(e=>\`
         <div class="item">
           <div>
-            <div><span class="chip">${e.category}</span></div>
-            <div class="muted" style="font-size:12px">${e.minutes} 分 ${e.estimate && e.startTime?`（${e.startTime}→${e.endTime}）`:''}</div>
+            <div><span class="chip">\${e.category}</span></div>
+            <div class="muted" style="font-size:12px">\${e.minutes} 分 \${e.startTime && e.endTime ? '（'+e.startTime+'→'+e.endTime+'）':''}</div>
           </div>
-          <button class="tab-btn" data-del="${e.id}">削除</button>
+          <button class="tab-btn btn-sm danger" data-del="\${e.id}">削除</button>
         </div>
-      `).join('') || `<div class="hint">記録なし</div>`}
-    `;
+      \`).join('') || \`<div class="hint">記録なし</div>\`}
+    \`;
+  });
+  dayDetails.addEventListener('click', (e)=>{
+    const id = e.target?.dataset?.del; if(!id) return;
+    entries = entries.filter(x=>String(x.id)!==String(id));
+    save(KEYS.entries, entries); toast('削除しました');
+    renderAll();
   });
   prevMonthBtn.addEventListener('click', ()=>{
     if(currentYM.m===0){ currentYM.y--; currentYM.m=11; } else currentYM.m--;
@@ -600,54 +619,24 @@
     const max = Math.max(...weeks.map(w=>w.sum), 1);
     weekBars.innerHTML = weeks.map(w=>{
       const h = Math.round((w.sum/max)*100);
-      const label = `${pad(w.start.getMonth()+1)}/${pad(w.start.getDate())}`;
-      return `<div class="bar" title="${label}〜${pad(w.end.getMonth()+1)}/${pad(w.end.getDate())}：${w.sum}分">
-        <div class="col" style="height:${h}%"></div>
-        <label>${label}</label>
-      </div>`;
+      const label = \`\${pad(w.start.getMonth()+1)}/\${pad(w.start.getDate())}\`;
+      return \`<div class="bar" title="\${label}〜\${pad(w.end.getMonth()+1)}/\${pad(w.end.getDate())}：\${w.sum}分">
+        <div class="val">\${w.sum}</div>
+        <div class="col" style="height:\${h}%"></div>
+        <label>\${label}</label>
+      </div>\`;
     }).join('');
 
     weekTable.innerHTML = weeks.slice().reverse().map(w=>{
-      return `<div class="item">
-        <div>${w.start.getFullYear()}/${pad(w.start.getMonth()+1)}/${pad(w.start.getDate())} 〜 ${pad(w.end.getMonth()+1)}/${pad(w.end.getDate())}</div>
-        <div><strong>${w.sum}</strong> 分</div>
-      </div>`;
+      return \`<div class="item">
+        <div>\${w.start.getFullYear()}/\${pad(w.start.getMonth()+1)}/\${pad(w.start.getDate())} 〜 \${pad(w.end.getMonth()+1)}/\${pad(w.end.getDate())}</div>
+        <div><strong>\${w.sum}</strong> 分</div>
+      </div>\`;
     }).join('');
 
     const total8 = weeks.reduce((a,b)=>a+b.sum,0);
-    weekTotalHint.textContent = `合計: ${total8} 分（直近8週）`;
+    weekTotalHint.textContent = \`合計: \${total8} 分（直近8週）\`;
   }
-
-  /*** 日ビュー ***/
-  function renderDay(){
-    const days = [];
-    const today = new Date();
-    for(let i=0; i<14; i++){
-      const d = addDays(today, -i);
-      const key = dateToStr(d);
-      const sum = entries.filter(e=>{
-        if(dayCatFilter.value && e.category!==dayCatFilter.value) return false;
-        return e.date===key;
-      }).reduce((a,b)=>a+b.minutes,0);
-      days.push({date:key, sum});
-    }
-    dayList.innerHTML = days.map(d=>{
-      const items = entries.filter(e=>{
-        if(dayCatFilter.value && e.category!==dayCatFilter.value) return false;
-        return e.date===d.date;
-      }).sort((a,b)=>b.createdAt-a.createdAt);
-      return `<div class="item" style="flex-direction:column; align-items:stretch">
-        <div class="inline" style="justify-content:space-between">
-          <div><strong>${d.date}</strong></div>
-          <div>合計 <strong>${d.sum}</strong> 分</div>
-        </div>
-        <div class="inline" style="flex-wrap:wrap; gap:6px; margin-top:6px">
-          ${ items.map(i=>`<span class="chip">${i.category} ${i.minutes}分</span>`).join('') || `<span class="hint">記録なし</span>`}
-        </div>
-      </div>`;
-    }).join('');
-  }
-  dayCatFilter.addEventListener('change', renderDay);
 
   /*** 目標 ***/
   function renderGoal(){
@@ -656,7 +645,7 @@
       goalEnd.value   = goal.end;
       goalHours.value = Math.round(goal.targetMin/60);
     }
-    const hint = goal ? `${goal.start}〜${goal.end}` : '未設定';
+    const hint = goal ? \`\${goal.start}〜\${goal.end}\` : '未設定';
     goalRangeHint.textContent = hint;
 
     let accum = 0, target = 0, pct = 0, left = '';
@@ -669,12 +658,12 @@
       target = goal.targetMin;
       pct = Math.min(100, Math.round((accum/Math.max(1,target))*100));
       const daysLeft = Math.max(0, Math.ceil((e - new Date())/86400000));
-      left = `終了まで残り ${daysLeft} 日`;
+      left = \`終了まで残り \${daysLeft} 日\`;
     }
     goalBar.style.width = pct + '%';
-    goalAccum.textContent = `${accum.toLocaleString()} 分`;
-    goalTarget.textContent = target ? `${target.toLocaleString()} 分` : '—';
-    goalPct.textContent = target ? `${pct}%` : '—';
+    goalAccum.textContent = \`\${accum.toLocaleString()} 分\`;
+    goalTarget.textContent = target ? \`\${target.toLocaleString()} 分\` : '—';
+    goalPct.textContent = target ? \`\${pct}%\` : '—';
     goalDaysLeft.textContent = left;
   }
   goalForm.addEventListener('submit', (e)=>{
@@ -685,19 +674,23 @@
     save(KEYS.goal, goal); toast('目標を保存しました');
     renderGoal();
   });
+  deleteGoalBtn.addEventListener('click', ()=>{
+    if(!confirm('目標を削除しますか？')) return;
+    goal = null; localStorage.removeItem(KEYS.goal); renderGoal(); toast('目標を削除しました');
+  });
 
   /*** カテゴリ管理 ***/
   function renderCats(){
-    catList.innerHTML = categories.map((c,i)=>`
+    catList.innerHTML = categories.map((c,i)=>\`
       <div class="item">
-        <div>${c}</div>
+        <div>\${c}</div>
         <div class="inline">
-          <button class="tab-btn" data-up="${i}">↑</button>
-          <button class="tab-btn" data-down="${i}">↓</button>
-          <button class="tab-btn danger" data-del="${i}">削除</button>
+          <button class="tab-btn btn-sm" data-up="\${i}">↑</button>
+          <button class="tab-btn btn-sm" data-down="\${i}">↓</button>
+          <button class="tab-btn btn-sm danger" data-del="\${i}">削除</button>
         </div>
       </div>
-    `).join('') || `<div class="hint">カテゴリがありません。追加してください。</div>`;
+    \`).join('') || \`<div class="hint">カテゴリがありません。追加してください。</div>\`;
   }
   addCatBtn.addEventListener('click', ()=>{
     const name = (newCat.value||'').trim();
@@ -710,7 +703,6 @@
     const i = e.target?.dataset?.del;
     if(i!==undefined){
       const name = categories[i];
-      // そのカテゴリの記録がある場合は削除不可にするか確認
       const used = entries.some(x=>x.category===name);
       if(used){ alert('このカテゴリの記録が存在します。先に記録を変更/削除してください。'); return; }
       categories.splice(i,1); save(KEYS.cats, categories);
@@ -747,7 +739,7 @@
     const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `study_backup_${Date.now()}.json`;
+    a.download = \`study_backup_\${Date.now()}.json\`;
     a.click();
     URL.revokeObjectURL(a.href);
   });
@@ -774,14 +766,13 @@
     renderRecent();
     renderMonth();
     renderWeek();
-    renderDay();
     renderGoal();
   }
 
   /*** 初期化 ***/
   function init(){
-    // 今日を既定値に
     dateEl.value = todayStr();
+    setTab('month');      // 初期表示は「月」
     renderAll();
   }
   init();
