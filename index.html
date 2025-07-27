@@ -779,6 +779,7 @@
       renderSummary();
       renderWeek();
       renderMonth();
+      renderYear();
       renderGoal();
       renderActiveGoals();
       renderGoalHistory();
@@ -1068,7 +1069,17 @@
     });
 
     // --- 全体レンダリング
-    function renderAll(){renderCategorySelect();renderSummary();renderWeek();renderMonth();renderGoal();renderActiveGoals();renderGoalHistory();renderCats();}
+    function renderAll(){
+      renderCategorySelect();
+      renderSummary();
+      renderWeek();
+      renderMonth();
+      renderYear();
+      renderGoal();
+      renderActiveGoals();
+      renderGoalHistory();
+      renderCats();
+    }
     function init(){dateEl.value=todayStr();estimateTimes();renderAll();}
     init();
 
