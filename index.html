@@ -386,6 +386,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span id="weekRange" style="font-weight:bold"></span>
           <input type="week" id="weekPicker" style="max-width:120px;">
+          <button class="tab-btn" id="showWeekBtn" type="button">表示</button>
         </div>
         <div id="weekHeatmap" style="display:none"></div>
         <div id="weekTable" style="display:none"></div>
@@ -671,6 +672,12 @@
       tableEl.innerHTML=`<table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
     }
 
+    function showWeek(){
+      document.getElementById('weekHeatmap').style.display='grid';
+      document.getElementById('weekTable').style.display='block';
+      renderWeek();
+    }
+
     // --- カテゴリ選択
     const catSel=document.getElementById('category');
     const goalCatSel=document.getElementById('goalCategory');
@@ -694,7 +701,11 @@
     }
     minEl.addEventListener('input',estimateTimes);
     dateEl.addEventListener('change',estimateTimes);
-    document.getElementById('weekPicker').addEventListener('change',e=>{currentWeekStart=weekStrToDate(e.target.value);document.getElementById('weekHeatmap').style.display="grid";document.getElementById('weekTable').style.display="block";renderWeek();});
+    document.getElementById('weekPicker').addEventListener('change',e=>{
+      currentWeekStart=weekStrToDate(e.target.value);
+      showWeek();
+    });
+    document.getElementById('showWeekBtn').addEventListener('click',showWeek);
     // 記録
     form.addEventListener('submit',e=>{
       e.preventDefault();
