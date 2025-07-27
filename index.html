@@ -357,21 +357,19 @@
       <div class="flex-split">
         <!-- カレンダー -->
         <div class="calendar-card">
-          <div class="calendar-head">
+          <div class="calendar-head" id="calendarNav">
             <button id="prevMonth" class="calendar-nav-btn">&lt;</button>
             <div id="monthTitle" class="calendar-title-btn"></div>
             <button id="nextMonth" class="calendar-nav-btn">&gt;</button>
+            <button id="prevYear" class="calendar-nav-btn" style="display:none">&lt;</button>
+            <div id="yearTitle" class="calendar-title-btn" style="display:none"></div>
+            <button id="nextYear" class="calendar-nav-btn" style="display:none">&gt;</button>
             <button id="toggleYear" class="calendar-nav-btn">年</button>
           </div>
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
           <div id="dayDetails" style="margin-top:10px"></div>
           <div id="yearView" style="display:none">
-            <div class="calendar-head">
-              <button id="prevYear" class="calendar-nav-btn">&lt;</button>
-              <div id="yearTitle" class="calendar-title-btn"></div>
-              <button id="nextYear" class="calendar-nav-btn">&gt;</button>
-            </div>
             <div id="yearGrid" class="year-grid"></div>
           </div>
         </div>
@@ -694,6 +692,9 @@
         prevMonthBtn.style.display='none';
         nextMonthBtn.style.display='none';
         monthTitle.style.display='none';
+        prevYearBtn.style.display='';
+        nextYearBtn.style.display='';
+        yearTitle.style.display='';
         toggleYearBtn.textContent='月';
         currentYear=currentYM.y;
         renderYear();
@@ -705,6 +706,9 @@
         prevMonthBtn.style.display='';
         nextMonthBtn.style.display='';
         monthTitle.style.display='';
+        prevYearBtn.style.display='none';
+        nextYearBtn.style.display='none';
+        yearTitle.style.display='none';
         toggleYearBtn.textContent='年';
       }
     });
@@ -721,6 +725,9 @@
       dayDetails.style.display='';
       prevMonthBtn.style.display='';
       nextMonthBtn.style.display='';
+      prevYearBtn.style.display='none';
+      nextYearBtn.style.display='none';
+      yearTitle.style.display='none';
       toggleYearBtn.textContent='年';
       renderMonth();
     });
