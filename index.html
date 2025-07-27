@@ -236,6 +236,13 @@
       flex:2 1 0;
     }
     .records-card {max-width:420px;}
+    .goal-card {
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:12px;
+      margin-bottom:12px;
+    }
     /* --- モーダル --- */
     .modal-bg {
       position:fixed;z-index:50;left:0;top:0;width:100vw;height:100vh;
@@ -251,7 +258,9 @@
     .modal-content select{margin-top:6px;}
     .modal-actions {display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
     /* --- 目標履歴カード --- */
-    .goal-list-card {margin-top:18px;}
+    .goal-list-card {
+      margin-top:0;
+    }
     .goal-hist-item {
       background:var(--goalhist-bg);
       border-radius:12px;
@@ -398,9 +407,10 @@
         </div>
       </div>
     </section>
-    <!-- 目標 -->
-    <section id="tab-goal" style="display:none">
-      <form id="goalForm">
+      <!-- 目標 -->
+      <div id="tab-goal" style="display:none">
+        <section class="goal-card">
+        <form id="goalForm">
         <div class="row">
           <div>
             <label>開始日</label>
@@ -421,8 +431,8 @@
           <button class="primary" type="submit">保存</button>
           <button class="danger" type="button" id="goalDeleteBtn">削除</button>
         </div>
-      </form>
-      <div class="progress-wrap">
+        </form>
+        <div class="progress-wrap">
         <div class="inline" style="justify-content:space-between">
           <div><strong>目標期間</strong></div>
           <div class="hint" id="goalRangeHint"></div>
@@ -436,9 +446,12 @@
           <div class="item"><div>達成率</div><div id="goalPct" style="font-weight:700"></div></div>
         </div>
         <div class="hint" id="goalDaysLeft" style="margin-top:6px"></div>
+        </div>
+        </section>
+        <section class="goal-card">
+          <div class="goal-list-card" id="goalHistory"></div>
+        </section>
       </div>
-      <div class="goal-list-card" id="goalHistory"></div>
-    </section>
     <!-- カテゴリ管理 -->
     <section id="tab-cats" style="display:none">
       <div class="row">
