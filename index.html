@@ -555,7 +555,6 @@
       startEl=document.getElementById('startTime'),endEl=document.getElementById('endTime');
     function estimateTimes(){
       const mins=Number(minEl.value||0);if(!mins){return;}
-      if(dateEl.value!==todayStr()){return;}
       const end=new Date(),start=new Date(end.getTime()-mins*60000);
       const fmt=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
       startEl.value=fmt(start);endEl.value=fmt(end);
