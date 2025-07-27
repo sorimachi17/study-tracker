@@ -102,6 +102,8 @@
       height:100%;border-radius:7px;background:var(--accent);
       transition:.25s;width:0;
     }
+    .week-table {width:100%;border-collapse:collapse;font-size:13px;}
+    .week-table th,.week-table td{padding:4px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;}
     /* 共通プログレスバー */
     .progress {
       width:100%;height:10px;border-radius:8px;
@@ -374,6 +376,7 @@
     <!-- メイン画面 -->
     <section id="tab-main">
       <div id="summaryCard" class="summary-card"></div>
+      <div id="weekCard" class="summary-card"></div>
       <div class="flex-split">
         <!-- カレンダー -->
         <div class="calendar-card">
@@ -445,6 +448,12 @@
             <input type="number" id="goalHours" min="1" placeholder="例: 100" required>
           </div>
         </div>
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label>カテゴリ</label>
+            <select id="goalCategory"></select>
+          </div>
+        </div>
         <div class="goal-btns">
           <button class="primary" type="submit">保存</button>
           <button class="danger" type="button" id="goalDeleteBtn">削除</button>
@@ -464,6 +473,7 @@
           <div class="item"><div>達成率</div><div id="goalPct" style="font-weight:700"></div></div>
         </div>
         <div class="hint" id="goalDaysLeft" style="margin-top:6px"></div>
+        <div class="hint" id="goalCatHint" style="margin-top:4px"></div>
         </div>
         </section>
         <section class="goal-card">
@@ -529,7 +539,7 @@
     function setTab(name){
       for(const btn of tabBtns){btn.classList.toggle('active',btn.dataset.tab===name);}
       Object.entries(sections).forEach(([k,sec])=>{sec.style.display=(k===name)?'block':'none';});
-      if(name==='main') {renderSummary(); renderMonth();}
+      if(name==='main') {renderSummary(); renderWeek(); renderMonth();}
       if(name==='goal') {renderGoal(); renderGoalHistory();}
       if(name==='cats') renderCats();
     }
@@ -550,10 +560,19 @@
       if(goal && goal.start && goal.end){
         const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
         totalMin = entries
-          .filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e;})
+          .filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e && (goal.category==='all' || !goal.category || x.category===goal.category);})
           .reduce((a,b)=>a+b.minutes,0);
       }
       const totalH = fmt(totalMin/60,1);
+      const rangeEntries = entries.filter(x=>{
+        if(goal && goal.start && goal.end){
+          const d=parseDateStr(x.date);
+          if(d<parseDateStr(goal.start)||d>parseDateStr(goal.end)) return false;
+        }
+        return true;
+      });
+      const catTotals={};
+      rangeEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
       // 記録開始日数:目標開始基準
       let startDate = entries.map(e=>e.date).sort()[0];
       let days = 1, goalPeriod = "";
@@ -591,14 +610,41 @@
           <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
           <div>目標到達予測：${predict||'—'}</div>
         </div>
+        <div class="summary-list" style="margin-top:4px;">
+          ${Object.entries(catTotals).map(([c,v])=>`<div>${c}: <b>${fmt(v/60,1)}</b>h</div>`).join('')}
+        </div>
       `;
       // 進捗バー描画
       document.getElementById('mainProgressBar').style.width = pct + '%';
     }
 
+    function renderWeek(){
+      const wrap=document.getElementById('weekCard');
+      const start=new Date();start.setDate(start.getDate()-6);
+      const rows=[];
+      for(let i=0;i<7;i++){
+        const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+        const key=dateToStr(d);
+        const list=entries.filter(e=>e.date===key).sort((a,b)=>{
+          const t1=a.startTime||'',t2=b.startTime||'';return t1.localeCompare(t2);
+        });
+        const times=list.map(e=>`${e.startTime||''}～${e.endTime||''} <span class="chip muted">${e.category}</span>`).join('<br>');
+        rows.push(`<tr><td>${key}</td><td>${times||'<span class="muted">記録なし</span>'}</td></tr>`);
+      }
+      wrap.innerHTML=`<div style="font-weight:bold">直近1週間の記録</div><table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
+    }
+
     // --- カテゴリ選択
     const catSel=document.getElementById('category');
-    function renderCategorySelect(){catSel.innerHTML='';categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});}
+    const goalCatSel=document.getElementById('goalCategory');
+    function renderCategorySelect(){
+      catSel.innerHTML='';
+      goalCatSel.innerHTML='<option value="all">全て</option>';
+      categories.forEach(c=>{
+        const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);
+        const g=document.createElement('option');g.value=c;g.textContent=c;goalCatSel.appendChild(g);
+      });
+    }
 
     // --- 記録フォーム
     const form=document.getElementById('entryForm'),dateEl=document.getElementById('date'),minEl=document.getElementById('minutes'),
@@ -681,6 +727,7 @@
       save(KEYS.entries,entries);
       toast('削除しました');
       renderSummary();
+      renderWeek();
       renderMonth();
       renderGoal();
       renderGoalHistory();
@@ -801,15 +848,24 @@
       goalHistory=document.getElementById('goalHistory');
     function goalStats(g){
       const s=parseDateStr(g.start),e=parseDateStr(g.end);
-      const accum=entries.filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e;}).reduce((a,b)=>a+b.minutes,0);
+      const accum=entries.filter(x=>{
+        const d=parseDateStr(x.date);
+        if(d<s||d>e) return false;
+        if(g.category && g.category!=='all' && x.category!==g.category) return false;
+        return true;
+      }).reduce((a,b)=>a+b.minutes,0);
       const target=g.targetMin;
       const pct=Math.min(100,Math.round((accum/Math.max(1,target))*100));
       return {accum,target,pct};
     }
     function renderGoal(){
       const g = latestGoal();
-      if(g){goalStart.value=g.start;goalEnd.value=g.end;goalHours.value=Math.round(g.targetMin/60);}
-      else{goalStart.value='';goalEnd.value='';goalHours.value='';}
+      if(g){
+        goalStart.value=g.start;goalEnd.value=g.end;goalHours.value=Math.round(g.targetMin/60);
+        goalCatSel.value=g.category||'all';
+      } else {
+        goalStart.value='';goalEnd.value='';goalHours.value='';goalCatSel.value='all';
+      }
       goalRangeHint.textContent=g?`${g.start}〜${g.end}`:'未設定';
       let accum=0,target=0,pct=0,left='';
       if(g){
@@ -823,6 +879,7 @@
       goalTarget.textContent=g?`${fmt(target/60,1)}h (${fmt(target)}m)`:'—';
       goalPct.textContent=g?`${fmt(pct)}%`:'—';
       goalDaysLeft.textContent=g?left:'';
+      goalCatHint.textContent=g?`カテゴリ: ${g.category&&g.category!=='all'?g.category:'全て'}`:'';
     }
     // 目標履歴
     function renderGoalHistory(){
@@ -831,7 +888,7 @@
         goals.slice(0,-1).reverse().map((g,i)=>{
           const stats=goalStats(g);
           return `<div class="goal-hist-item">
-            <div class="goal-hist-period">${g.start}〜${g.end}</div>
+            <div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div>
             <div class="goal-hist-kpis">
               <span class="gh-kpi">累計: <b>${fmt(stats.accum/60,1)}h</b></span>
               <span class="gh-kpi">目標: <b>${fmt(g.targetMin/60,1)}h</b></span>
@@ -862,15 +919,17 @@
     });
 
     goalForm.addEventListener('submit',e=>{
-      e.preventDefault();const start=goalStart.value,end=goalEnd.value,hours=Number(goalHours.value||0);if(!start||!end||!hours)return;
-      goals.push({start,end,targetMin:hours*60});
-      save(KEYS.goals,goals);toast('保存');renderGoal();renderGoalHistory();
+      e.preventDefault();
+      const start=goalStart.value,end=goalEnd.value,hours=Number(goalHours.value||0),cat=goalCatSel.value||'all';
+      if(!start||!end||!hours)return;
+      goals.push({start,end,targetMin:hours*60,category:cat});
+      save(KEYS.goals,goals);toast('保存');renderGoal();renderGoalHistory();renderSummary();renderWeek();
     });
     goalDeleteBtn.addEventListener('click',()=>{
       if(!goals.length) return;
       if(!confirm('最新の目標を削除しますか？'))return;
       goals.pop();
-      save(KEYS.goals,goals);renderGoal();renderGoalHistory();
+      save(KEYS.goals,goals);renderGoal();renderGoalHistory();renderSummary();renderWeek();
     });
 
     // --- カテゴリ管理
@@ -922,7 +981,7 @@
     });
 
     // --- 全体レンダリング
-    function renderAll(){renderCategorySelect();renderSummary();renderMonth();renderGoal();renderGoalHistory();renderCats();}
+    function renderAll(){renderCategorySelect();renderSummary();renderWeek();renderMonth();renderGoal();renderGoalHistory();renderCats();}
     function init(){dateEl.value=todayStr();estimateTimes();renderAll();}
     init();
 
