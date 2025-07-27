@@ -131,9 +131,10 @@
       background:var(--lvl0);
       color:var(--text);
       border:none;
-      padding:0 6px;
+      padding:0 4px;
       font-size:14px;
       margin:0 3px;
+      width:72px;
     }
     .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s;}
     .calendar-title-btn:hover{background:var(--lvl1);}
@@ -402,6 +403,9 @@
             <button id="prevYear" class="calendar-nav-btn" style="display:none">&lt;</button>
             <div id="yearTitle" class="calendar-title-btn" style="display:none"></div>
             <button id="nextYear" class="calendar-nav-btn" style="display:none">&gt;</button>
+            <button id="prevWeek" class="calendar-nav-btn" style="display:none">&lt;</button>
+            <div id="weekTitle" class="calendar-title-btn" style="display:none"></div>
+            <button id="nextWeek" class="calendar-nav-btn" style="display:none">&gt;</button>
             <select id="calendarView" class="calendar-nav-select">
               <option value="year">年</option>
               <option value="month" selected>月</option>
@@ -549,6 +553,11 @@
     const startOfWeek=d=>{const t=new Date(d);const diff=(t.getDay()+6)%7;t.setDate(t.getDate()-diff);t.setHours(0,0,0,0);return t;};
     const weekStrFromDate=d=>{const t=new Date(d);t.setDate(t.getDate()+3);const first=new Date(t.getFullYear(),0,1);const week=Math.floor((t-first)/604800000)+1;return `${t.getFullYear()}-W${pad(week)}`;};
     const weekStrToDate=s=>{const [y,w]=s.split('-W').map(Number);const d=new Date(y,0,1);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+(w-1)*7);return startOfWeek(d);};
+    const fmtWeekLabel=start=>{
+      const e=new Date(start);
+      e.setDate(start.getDate()+6);
+      return `${start.getFullYear()}年${start.getMonth()+1}/${start.getDate()}〜${e.getMonth()+1}/${e.getDate()}`;
+    };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
     const activeGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.start)<=today&&parseDateStr(g.end)>=today);};
@@ -667,8 +676,10 @@
 }
 
     // empty renderer (week view handled separately)
-    function renderWeek(){}
-
+    function renderWeek(){
+      weekView.innerHTML=weekHeatmapHTML(currentWeekStart);
+      weekTitle.textContent=fmtWeekLabel(currentWeekStart);
+    }
 
     // --- カテゴリ選択
     const catSel=document.getElementById('category');
@@ -715,7 +726,10 @@
       yearGrid=document.getElementById('yearGrid'),
       yearTitle=document.getElementById('yearTitle'),
       prevYearBtn=document.getElementById('prevYear'),
-      nextYearBtn=document.getElementById('nextYear');
+      nextYearBtn=document.getElementById('nextYear'),
+      prevWeekBtn=document.getElementById("prevWeek"),
+      nextWeekBtn=document.getElementById("nextWeek"),
+      weekTitle=document.getElementById("weekTitle");
     let activeDayDetail=null;
     const DOW=['月','火','水','木','金','土','日'];
     let currentYM={y:new Date().getFullYear(),m:new Date().getMonth()};
@@ -821,20 +835,26 @@
         nextYearBtn.style.display='';
         yearTitle.style.display='';
         currentYear=currentYM.y;
+        prevWeekBtn.style.display="none";
+        nextWeekBtn.style.display="none";
+        weekTitle.style.display="none";
         renderYear();
       } else if(view==='week') {
-        yearView.style.display='none';
-        weekView.style.display='block';
-        weekView.innerHTML=weekHeatmapHTML(currentWeekStart);
-        dowRow.style.display='none';
-        monthGrid.style.display='none';
-        dayDetails.style.display='none';
-        prevMonthBtn.style.display='none';
-        nextMonthBtn.style.display='none';
-        monthTitle.style.display='none';
-        prevYearBtn.style.display='none';
-        nextYearBtn.style.display='none';
-        yearTitle.style.display='none';
+          yearView.style.display="none";
+          weekView.style.display="block";
+          renderWeek();
+          dowRow.style.display="none";
+          monthGrid.style.display="none";
+          dayDetails.style.display="none";
+          prevMonthBtn.style.display="none";
+          nextMonthBtn.style.display="none";
+          monthTitle.style.display="none";
+          prevYearBtn.style.display="none";
+          nextYearBtn.style.display="none";
+          yearTitle.style.display="none";
+          prevWeekBtn.style.display="";
+          nextWeekBtn.style.display="";
+          weekTitle.style.display="";
       } else {
         yearView.style.display='none';
         weekView.style.display='none';
@@ -847,6 +867,9 @@
         prevYearBtn.style.display='none';
         nextYearBtn.style.display='none';
         yearTitle.style.display='none';
+        prevWeekBtn.style.display="none";
+        nextWeekBtn.style.display="none";
+        weekTitle.style.display="none";
       }
     }
 
@@ -855,6 +878,8 @@
     });
     prevYearBtn.addEventListener('click',()=>{currentYear--;renderYear();});
     nextYearBtn.addEventListener('click',()=>{currentYear++;renderYear();});
+    prevWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()-7);renderWeek();});
+    nextWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()+7);renderWeek();});
     yearGrid.addEventListener('click',e=>{
       const t=e.target.closest('.mini-month');
       if(!t)return;
