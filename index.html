@@ -712,6 +712,7 @@
       if(!minutes||minutes<=0||!cat)return;
       entries.push({id:Date.now().toString(36),date:dateEl.value||todayStr(),minutes,category:cat,createdAt:Date.now(),startTime:st,endTime:endt});
       save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();renderAll();
+      setCalendarView(calendarViewSel.value);
     });
 
     // --- カレンダー表示 + 月選択モーダル
@@ -772,11 +773,13 @@
       renderDayDetails(d);
     });
     dayDetails.addEventListener('click',e=>{
-      const id=e.target?.dataset?.del;if(!id)return;
-      const {clientX, clientY}=e;
-      const row=e.target.closest('.rec-row');
-      entries=entries.filter(x=>String(x.id)!==String(id));
-      save(KEYS.entries,entries);
+      const id=e.target?.dataset?.del; if(!id) return;
+      const {clientX, clientY} = e;
+      const row = e.target.closest('.rec-row');
+      const btnBefore = e.target.classList.contains('del-btn') ? e.target : null;
+      if(btnBefore) btnBefore.classList.add('no-hover');
+      entries = entries.filter(x => String(x.id) !== String(id));
+      save(KEYS.entries, entries);
       toast('削除しました');
       renderSummary();
       renderWeek();
@@ -786,13 +789,14 @@
       renderActiveGoals();
       renderGoalHistory();
       if(activeDayDetail) renderDayDetails(activeDayDetail);
-      const btn=document.elementFromPoint(clientX,clientY);
+      setCalendarView(calendarViewSel.value);
+      const btn = document.elementFromPoint(clientX, clientY);
       if(row) row.remove();
       if(btn?.classList.contains('del-btn')){
         btn.classList.add('no-hover');
-        btn.addEventListener('mouseleave',()=>{
+        btn.addEventListener('mouseleave', ()=>{
           btn.classList.remove('no-hover');
-        },{once:true});
+        }, {once:true});
       }
     });
 
@@ -1082,6 +1086,7 @@
       renderActiveGoals();
       renderGoalHistory();
       renderCats();
+      setCalendarView(calendarViewSel.value);
     }
     function init(){dateEl.value=todayStr();estimateTimes();renderAll();}
     init();
