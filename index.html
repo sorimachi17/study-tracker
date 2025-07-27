@@ -325,8 +325,8 @@
       width:48%;min-width:90px;font-size:16px;border-radius:13px;padding:13px 0;
     }
     /* --- 週間ヒートマップ --- */
-    .week-heatmap{display:grid;grid-template-columns:32px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
-    .week-heatmap .cell{aspect-ratio:1/1;border-radius:2px}
+    .week-heatmap{display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
+    .week-heatmap .cell{height:12px;border-radius:2px}
     .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
@@ -389,7 +389,6 @@
           <button class="tab-btn" id="showWeekBtn" type="button">表示</button>
         </div>
         <div id="weekHeatmap" style="display:none"></div>
-        <div id="weekTable" style="display:none"></div>
       </div>
       <div class="flex-split">
         <!-- カレンダー -->
@@ -402,6 +401,7 @@
             <div id="yearTitle" class="calendar-title-btn" style="display:none"></div>
             <button id="nextYear" class="calendar-nav-btn" style="display:none">&gt;</button>
             <button id="toggleYear" class="calendar-nav-btn">年</button>
+            <button id="toggleWeek" class="calendar-nav-btn">週</button>
           </div>
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
@@ -409,6 +409,7 @@
           <div id="yearView" style="display:none">
             <div id="yearGrid" class="year-grid"></div>
           </div>
+          <div id="weekView" style="display:none"></div>
         </div>
         <!-- 記録入力 -->
         <div class="records-card">
@@ -643,38 +644,36 @@
       document.getElementById('mainProgressBar').style.width = pct + '%';
     }
 
+    function weekHeatmapHTML(start){
+      const heat=Array.from({length:7},()=>Array(24).fill(0));
+      for(let i=0;i<7;i++){
+        const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+        const key=dateToStr(d);
+        const list=entries.filter(e=>e.date===key);
+        list.forEach(e=>{if(!e.startTime||!e.endTime)return;const [sh,sm]=e.startTime.split(':').map(Number);const [eh,em]=e.endTime.split(':').map(Number);let st=sh*60+sm,et=eh*60+em;for(let h=0;h<24;h++){const hs=h*60,he=(h+1)*60;const overlap=Math.max(0,Math.min(et,he)-Math.max(st,hs));heat[i][h]+=overlap;}});
+      }
+      const groups=2,groupCount=24/groups;const heatAgg=Array.from({length:7},()=>Array(groupCount).fill(0));
+      for(let d=0;d<7;d++){for(let h=0;h<24;h++){const g=Math.floor(h/groups);heatAgg[d][g]+=heat[d][h];}}
+      const max=heatAgg.flat().reduce((a,b)=>Math.max(a,b),0);
+      let html='<div class="week-heatmap"><div></div>';
+      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);html+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
+      for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;html+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));html+=`<div class="cell lvl${lvl}"></div>`;}}html+='</div>';
+      return html;
+    }
+
     function renderWeek(){
       const heatEl=document.getElementById('weekHeatmap');
-      const tableEl=document.getElementById('weekTable');
       const picker=document.getElementById('weekPicker');
       const rangeEl=document.getElementById('weekRange');
       const start=currentWeekStart;
       const end=new Date(start);end.setDate(end.getDate()+6);
       picker.value=weekStrFromDate(start);
       rangeEl.textContent=`${dateToStr(start)}〜${dateToStr(end)}`;
-      const rows=[];
-      const heat=Array.from({length:7},()=>Array(24).fill(0));
-      for(let i=0;i<7;i++){
-        const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
-        const key=dateToStr(d);
-        const list=entries.filter(e=>e.date===key).sort((a,b)=>{const t1=a.startTime||'',t2=b.startTime||'';return t1.localeCompare(t2);});
-        const times=list.map(e=>`${e.startTime||''}～${e.endTime||''} <span class="chip muted">${e.category}</span>`).join('<br>');
-        rows.push(`<tr><td>${key}</td><td>${times||'<span class="muted">記録なし</span>'}</td></tr>`);
-        list.forEach(e=>{if(!e.startTime||!e.endTime)return;const [sh,sm]=e.startTime.split(':').map(Number);const [eh,em]=e.endTime.split(':').map(Number);let st=sh*60+sm,et=eh*60+em;for(let h=0;h<24;h++){const hs=h*60,he=(h+1)*60;const overlap=Math.max(0,Math.min(et,he)-Math.max(st,hs));heat[i][h]+=overlap;}});
-      }
-      const groups=4,groupCount=24/groups;const heatAgg=Array.from({length:7},()=>Array(groupCount).fill(0));
-      for(let d=0;d<7;d++){for(let h=0;h<24;h++){const g=Math.floor(h/groups);heatAgg[d][g]+=heat[d][h];}}
-      const max=heatAgg.flat().reduce((a,b)=>Math.max(a,b),0);
-      let heatHtml='<div class="week-heatmap"><div></div>';
-      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);heatHtml+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
-      for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;heatHtml+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));heatHtml+=`<div class="cell lvl${lvl}"></div>`;}}heatHtml+='</div>';
-      heatEl.innerHTML=heatHtml;
-      tableEl.innerHTML=`<table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
+      heatEl.innerHTML=weekHeatmapHTML(start);
     }
 
     function showWeek(){
       document.getElementById('weekHeatmap').style.display='grid';
-      document.getElementById('weekTable').style.display='block';
       renderWeek();
     }
 
@@ -723,7 +722,9 @@
       nextMonthBtn=document.getElementById('nextMonth'),
       dayDetails=document.getElementById('dayDetails'),
       toggleYearBtn=document.getElementById('toggleYear'),
+      toggleWeekBtn=document.getElementById('toggleWeek'),
       yearView=document.getElementById('yearView'),
+      weekView=document.getElementById('weekView'),
       yearGrid=document.getElementById('yearGrid'),
       yearTitle=document.getElementById('yearTitle'),
       prevYearBtn=document.getElementById('prevYear'),
@@ -867,6 +868,34 @@
       yearTitle.style.display='none';
       toggleYearBtn.textContent='年';
       renderMonth();
+    });
+
+    toggleWeekBtn.addEventListener('click',()=>{
+      const show=weekView.style.display==='none';
+      if(show){
+        weekView.style.display='block';
+        weekView.innerHTML=weekHeatmapHTML(currentWeekStart);
+        dowRow.style.display='none';
+        monthGrid.style.display='none';
+        dayDetails.style.display='none';
+        yearView.style.display='none';
+        prevMonthBtn.style.display='none';
+        nextMonthBtn.style.display='none';
+        monthTitle.style.display='none';
+        prevYearBtn.style.display='none';
+        nextYearBtn.style.display='none';
+        yearTitle.style.display='none';
+        toggleWeekBtn.textContent='月';
+      }else{
+        weekView.style.display='none';
+        dowRow.style.display='grid';
+        monthGrid.style.display='grid';
+        dayDetails.style.display='';
+        prevMonthBtn.style.display='';
+        nextMonthBtn.style.display='';
+        monthTitle.style.display='';
+        toggleWeekBtn.textContent='週';
+      }
     });
     // 月選択モーダル制御
     const monthModal=document.getElementById('monthModal');
