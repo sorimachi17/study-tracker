@@ -713,10 +713,10 @@
       const dStr = dateEl.value||todayStr();
       entries.push({id:Date.now().toString(36),date:dStr,minutes,category:cat,createdAt:Date.now(),startTime:st,endTime:endt});
       save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();
-      if(calendarViewSel.value==='week'){
-        currentWeekStart=startOfWeek(parseDateStr(dStr));
-      }
       renderAll();
+      if(calendarViewSel.value==='week'){
+        renderWeek();
+      }
       setCalendarView(calendarViewSel.value);
     });
 
