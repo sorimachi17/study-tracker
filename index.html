@@ -338,6 +338,7 @@
     /* --- 週間ヒートマップ --- */
     .week-heatmap{display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
     .week-heatmap .cell{height:12px;border-radius:2px}
+    .week-heatmap .week-date{cursor:pointer}
     .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
@@ -554,9 +555,8 @@
     const weekStrFromDate=d=>{const t=new Date(d);t.setDate(t.getDate()+3);const first=new Date(t.getFullYear(),0,1);const week=Math.floor((t-first)/604800000)+1;return `${t.getFullYear()}-W${pad(week)}`;};
     const weekStrToDate=s=>{const [y,w]=s.split('-W').map(Number);const d=new Date(y,0,1);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+(w-1)*7);return startOfWeek(d);};
     const fmtWeekLabel=start=>{
-      const e=new Date(start);
-      e.setDate(start.getDate()+6);
-      return `${start.getFullYear()}年${start.getMonth()+1}/${start.getDate()}〜${e.getMonth()+1}/${e.getDate()}`;
+      const weekNum=parseInt(weekStrFromDate(start).split('-W')[1]);
+      return `${start.getFullYear()}年${start.getMonth()+1}月${weekNum}週`;
     };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
@@ -670,8 +670,8 @@
       for(let d=0;d<7;d++){for(let h=0;h<24;h++){const g=Math.floor(h/groups);heatAgg[d][g]+=heat[d][h];}}
       const max=heatAgg.flat().reduce((a,b)=>Math.max(a,b),0);
   let html='<div class="week-heatmap"><div></div>';
-      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);html+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
-      for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;html+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));html+=`<div class="cell lvl${lvl}"></div>`;}}html+='</div>';
+      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=dateToStr(d);html+=`<div class="week-date" data-date="${ds}" style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
+      for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;html+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const day=new Date(start);day.setDate(start.getDate()+d);const ds=dateToStr(day);const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));html+=`<div class="cell lvl${lvl}" data-date="${ds}"></div>`;}}html+='</div>';
   return html;
 }
 
@@ -878,8 +878,16 @@
     });
     prevYearBtn.addEventListener('click',()=>{currentYear--;renderYear();});
     nextYearBtn.addEventListener('click',()=>{currentYear++;renderYear();});
-    prevWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()-7);renderWeek();});
-    nextWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()+7);renderWeek();});
+    prevWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()-7);dayDetails.style.display='none';renderWeek();});
+    nextWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()+7);dayDetails.style.display='none';renderWeek();});
+    weekView.addEventListener('click',e=>{
+      const t=e.target.closest('.cell, .week-date');
+      if(!t) return;
+      const d=t.dataset.date;
+      if(!d) return;
+      dayDetails.style.display='';
+      renderDayDetails(d);
+    });
     yearGrid.addEventListener('click',e=>{
       const t=e.target.closest('.mini-month');
       if(!t)return;
