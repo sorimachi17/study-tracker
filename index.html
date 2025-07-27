@@ -710,8 +710,13 @@
       e.preventDefault();
       const minutes=Number(minEl.value),cat=catSel.value,st=startEl.value,endt=endEl.value;
       if(!minutes||minutes<=0||!cat)return;
-      entries.push({id:Date.now().toString(36),date:dateEl.value||todayStr(),minutes,category:cat,createdAt:Date.now(),startTime:st,endTime:endt});
-      save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();renderAll();
+      const dStr = dateEl.value||todayStr();
+      entries.push({id:Date.now().toString(36),date:dStr,minutes,category:cat,createdAt:Date.now(),startTime:st,endTime:endt});
+      save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();
+      if(calendarViewSel.value==='week'){
+        currentWeekStart=startOfWeek(parseDateStr(dStr));
+      }
+      renderAll();
       setCalendarView(calendarViewSel.value);
     });
 
