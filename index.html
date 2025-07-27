@@ -328,7 +328,6 @@
     .week-heatmap{display:grid;grid-template-columns:32px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
     .week-heatmap .cell{aspect-ratio:1/1;border-radius:2px}
     .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
-    .footer-note{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 32px}
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
     /* カテゴリリスト（元のシンプルver） */
@@ -388,8 +387,8 @@
           <span id="weekRange" style="font-weight:bold"></span>
           <input type="week" id="weekPicker" style="max-width:120px;">
         </div>
-        <div id="weekHeatmap"></div>
-        <div id="weekTable"></div>
+        <div id="weekHeatmap" style="display:none"></div>
+        <div id="weekTable" style="display:none"></div>
       </div>
       <div class="flex-split">
         <!-- カレンダー -->
@@ -511,9 +510,7 @@
         <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
       </div>
     </section>
-    <div class="footer-note">v7.0 / ローカル動作</div>
   </main>
-  <div class="toast" id="toast">保存しました</div>
   <!-- 月選択モーダル -->
   <div id="monthModal" class="modal-bg" style="display:none">
     <div class="modal-content">
@@ -664,10 +661,12 @@
         rows.push(`<tr><td>${key}</td><td>${times||'<span class="muted">記録なし</span>'}</td></tr>`);
         list.forEach(e=>{if(!e.startTime||!e.endTime)return;const [sh,sm]=e.startTime.split(':').map(Number);const [eh,em]=e.endTime.split(':').map(Number);let st=sh*60+sm,et=eh*60+em;for(let h=0;h<24;h++){const hs=h*60,he=(h+1)*60;const overlap=Math.max(0,Math.min(et,he)-Math.max(st,hs));heat[i][h]+=overlap;}});
       }
-      const max=heat.flat().reduce((a,b)=>Math.max(a,b),0);
+      const groups=4,groupCount=24/groups;const heatAgg=Array.from({length:7},()=>Array(groupCount).fill(0));
+      for(let d=0;d<7;d++){for(let h=0;h<24;h++){const g=Math.floor(h/groups);heatAgg[d][g]+=heat[d][h];}}
+      const max=heatAgg.flat().reduce((a,b)=>Math.max(a,b),0);
       let heatHtml='<div class="week-heatmap"><div></div>';
       for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);heatHtml+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
-      for(let h=0;h<24;h++){heatHtml+=`<div class="hour-label">${pad(h)}</div>`;for(let d=0;d<7;d++){const v=heat[d][h];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));heatHtml+=`<div class="cell lvl${lvl}"></div>`;}}heatHtml+='</div>';
+      for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;heatHtml+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));heatHtml+=`<div class="cell lvl${lvl}"></div>`;}}heatHtml+='</div>';
       heatEl.innerHTML=heatHtml;
       tableEl.innerHTML=`<table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
     }
@@ -695,8 +694,7 @@
     }
     minEl.addEventListener('input',estimateTimes);
     dateEl.addEventListener('change',estimateTimes);
-    document.getElementById('weekPicker').addEventListener('change',e=>{currentWeekStart=weekStrToDate(e.target.value);renderWeek();});
-
+    document.getElementById('weekPicker').addEventListener('change',e=>{currentWeekStart=weekStrToDate(e.target.value);document.getElementById('weekHeatmap').style.display="grid";document.getElementById('weekTable').style.display="block";renderWeek();});
     // 記録
     form.addEventListener('submit',e=>{
       e.preventDefault();
