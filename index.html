@@ -125,6 +125,16 @@
       margin:0 3px;
     }
     .calendar-nav-btn:active {background:var(--lvl1);}
+    .calendar-nav-select {
+      height:32px;
+      border-radius:6px;
+      background:var(--lvl0);
+      color:var(--text);
+      border:none;
+      padding:0 6px;
+      font-size:14px;
+      margin:0 3px;
+    }
     .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s;}
     .calendar-title-btn:hover{background:var(--lvl1);}
     .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7,1fr);}
@@ -382,14 +392,6 @@
         <div id="summaryGoalTabs" class="tabs" style="margin-bottom:6px;"></div>
         <div id="summaryContent"></div>
       </div>
-      <div id="weekCard" class="summary-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span id="weekRange" style="font-weight:bold"></span>
-          <input type="week" id="weekPicker" style="max-width:120px;">
-          <button class="tab-btn" id="showWeekBtn" type="button">表示</button>
-        </div>
-        <div id="weekHeatmap" style="display:none"></div>
-      </div>
       <div class="flex-split">
         <!-- カレンダー -->
         <div class="calendar-card">
@@ -400,8 +402,11 @@
             <button id="prevYear" class="calendar-nav-btn" style="display:none">&lt;</button>
             <div id="yearTitle" class="calendar-title-btn" style="display:none"></div>
             <button id="nextYear" class="calendar-nav-btn" style="display:none">&gt;</button>
-            <button id="toggleYear" class="calendar-nav-btn">年</button>
-            <button id="toggleWeek" class="calendar-nav-btn">週</button>
+            <select id="calendarView" class="calendar-nav-select">
+              <option value="year">年</option>
+              <option value="month" selected>月</option>
+              <option value="week">週</option>
+            </select>
           </div>
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
@@ -655,27 +660,15 @@
       const groups=2,groupCount=24/groups;const heatAgg=Array.from({length:7},()=>Array(groupCount).fill(0));
       for(let d=0;d<7;d++){for(let h=0;h<24;h++){const g=Math.floor(h/groups);heatAgg[d][g]+=heat[d][h];}}
       const max=heatAgg.flat().reduce((a,b)=>Math.max(a,b),0);
-      let html='<div class="week-heatmap"><div></div>';
+  let html='<div class="week-heatmap"><div></div>';
       for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);html+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
       for(let g=0;g<groupCount;g++){const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;html+=`<div class="hour-label">${label}</div>`;for(let d=0;d<7;d++){const v=heatAgg[d][g];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));html+=`<div class="cell lvl${lvl}"></div>`;}}html+='</div>';
-      return html;
-    }
+  return html;
+}
 
-    function renderWeek(){
-      const heatEl=document.getElementById('weekHeatmap');
-      const picker=document.getElementById('weekPicker');
-      const rangeEl=document.getElementById('weekRange');
-      const start=currentWeekStart;
-      const end=new Date(start);end.setDate(end.getDate()+6);
-      picker.value=weekStrFromDate(start);
-      rangeEl.textContent=`${dateToStr(start)}〜${dateToStr(end)}`;
-      heatEl.innerHTML=weekHeatmapHTML(start);
-    }
+    // empty renderer (week view handled separately)
+    function renderWeek(){}
 
-    function showWeek(){
-      document.getElementById('weekHeatmap').style.display='grid';
-      renderWeek();
-    }
 
     // --- カテゴリ選択
     const catSel=document.getElementById('category');
@@ -700,11 +693,6 @@
     }
     minEl.addEventListener('input',estimateTimes);
     dateEl.addEventListener('change',estimateTimes);
-    document.getElementById('weekPicker').addEventListener('change',e=>{
-      currentWeekStart=weekStrToDate(e.target.value);
-      showWeek();
-    });
-    document.getElementById('showWeekBtn').addEventListener('click',showWeek);
     // 記録
     form.addEventListener('submit',e=>{
       e.preventDefault();
@@ -721,8 +709,7 @@
       prevMonthBtn=document.getElementById('prevMonth'),
       nextMonthBtn=document.getElementById('nextMonth'),
       dayDetails=document.getElementById('dayDetails'),
-      toggleYearBtn=document.getElementById('toggleYear'),
-      toggleWeekBtn=document.getElementById('toggleWeek'),
+      calendarViewSel=document.getElementById('calendarView'),
       yearView=document.getElementById('yearView'),
       weekView=document.getElementById('weekView'),
       yearGrid=document.getElementById('yearGrid'),
@@ -819,10 +806,11 @@
       yearGrid.innerHTML=Array.from({length:12},(_,i)=>renderMiniMonth(currentYear,i)).join('');
     }
 
-    toggleYearBtn.addEventListener('click',()=>{
-      const show=yearView.style.display==='none';
-      if(show){
+    function setCalendarView(view){
+      calendarViewSel.value=view;
+      if(view==='year'){
         yearView.style.display='block';
+        weekView.style.display='none';
         dowRow.style.display='none';
         monthGrid.style.display='none';
         dayDetails.style.display='none';
@@ -832,11 +820,24 @@
         prevYearBtn.style.display='';
         nextYearBtn.style.display='';
         yearTitle.style.display='';
-        toggleYearBtn.textContent='月';
         currentYear=currentYM.y;
         renderYear();
-      }else{
+      } else if(view==='week') {
         yearView.style.display='none';
+        weekView.style.display='block';
+        weekView.innerHTML=weekHeatmapHTML(currentWeekStart);
+        dowRow.style.display='none';
+        monthGrid.style.display='none';
+        dayDetails.style.display='none';
+        prevMonthBtn.style.display='none';
+        nextMonthBtn.style.display='none';
+        monthTitle.style.display='none';
+        prevYearBtn.style.display='none';
+        nextYearBtn.style.display='none';
+        yearTitle.style.display='none';
+      } else {
+        yearView.style.display='none';
+        weekView.style.display='none';
         dowRow.style.display='grid';
         monthGrid.style.display='grid';
         dayDetails.style.display='';
@@ -846,8 +847,11 @@
         prevYearBtn.style.display='none';
         nextYearBtn.style.display='none';
         yearTitle.style.display='none';
-        toggleYearBtn.textContent='年';
       }
+    }
+
+    calendarViewSel.addEventListener('change',e=>{
+      setCalendarView(e.target.value);
     });
     prevYearBtn.addEventListener('click',()=>{currentYear--;renderYear();});
     nextYearBtn.addEventListener('click',()=>{currentYear++;renderYear();});
@@ -856,46 +860,8 @@
       if(!t)return;
       const y=parseInt(t.dataset.y),m=parseInt(t.dataset.m);
       currentYM={y,m};
-      yearView.style.display='none';
-      dowRow.style.display='grid';
-      monthGrid.style.display='grid';
-      dayDetails.style.display='';
-      prevMonthBtn.style.display='';
-      nextMonthBtn.style.display='';
-      monthTitle.style.display='';
-      prevYearBtn.style.display='none';
-      nextYearBtn.style.display='none';
-      yearTitle.style.display='none';
-      toggleYearBtn.textContent='年';
+      setCalendarView('month');
       renderMonth();
-    });
-
-    toggleWeekBtn.addEventListener('click',()=>{
-      const show=weekView.style.display==='none';
-      if(show){
-        weekView.style.display='block';
-        weekView.innerHTML=weekHeatmapHTML(currentWeekStart);
-        dowRow.style.display='none';
-        monthGrid.style.display='none';
-        dayDetails.style.display='none';
-        yearView.style.display='none';
-        prevMonthBtn.style.display='none';
-        nextMonthBtn.style.display='none';
-        monthTitle.style.display='none';
-        prevYearBtn.style.display='none';
-        nextYearBtn.style.display='none';
-        yearTitle.style.display='none';
-        toggleWeekBtn.textContent='月';
-      }else{
-        weekView.style.display='none';
-        dowRow.style.display='grid';
-        monthGrid.style.display='grid';
-        dayDetails.style.display='';
-        prevMonthBtn.style.display='';
-        nextMonthBtn.style.display='';
-        monthTitle.style.display='';
-        toggleWeekBtn.textContent='週';
-      }
     });
     // 月選択モーダル制御
     const monthModal=document.getElementById('monthModal');
