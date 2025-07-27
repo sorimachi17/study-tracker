@@ -555,8 +555,8 @@
     const weekStrFromDate=d=>{const t=new Date(d);t.setDate(t.getDate()+3);const first=new Date(t.getFullYear(),0,1);const week=Math.floor((t-first)/604800000)+1;return `${t.getFullYear()}-W${pad(week)}`;};
     const weekStrToDate=s=>{const [y,w]=s.split('-W').map(Number);const d=new Date(y,0,1);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+(w-1)*7);return startOfWeek(d);};
     const fmtWeekLabel=start=>{
-      const weekNum=parseInt(weekStrFromDate(start).split('-W')[1]);
-      return `${start.getFullYear()}年${start.getMonth()+1}月${weekNum}週`;
+      const end=new Date(start);end.setDate(start.getDate()+6);
+      return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}\uFF5E${end.getMonth()+1}/${end.getDate()}`;
     };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
@@ -827,6 +827,7 @@
         weekView.style.display='none';
         dowRow.style.display='none';
         monthGrid.style.display='none';
+        monthGrid.after(dayDetails);
         dayDetails.style.display='none';
         prevMonthBtn.style.display='none';
         nextMonthBtn.style.display='none';
@@ -843,6 +844,7 @@
           yearView.style.display="none";
           weekView.style.display="block";
           renderWeek();
+          weekView.after(dayDetails);
           dowRow.style.display="none";
           monthGrid.style.display="none";
           dayDetails.style.display="none";
@@ -856,10 +858,11 @@
           nextWeekBtn.style.display="";
           weekTitle.style.display="";
       } else {
-        yearView.style.display='none';
-        weekView.style.display='none';
-        dowRow.style.display='grid';
-        monthGrid.style.display='grid';
+          yearView.style.display='none';
+          weekView.style.display='none';
+          dowRow.style.display='grid';
+          monthGrid.style.display='grid';
+        monthGrid.after(dayDetails);
         dayDetails.style.display='';
         prevMonthBtn.style.display='';
         nextMonthBtn.style.display='';
