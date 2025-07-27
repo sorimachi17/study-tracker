@@ -324,6 +324,10 @@
     .goal-btns .primary, .goal-btns .danger {
       width:48%;min-width:90px;font-size:16px;border-radius:13px;padding:13px 0;
     }
+    /* --- 週間ヒートマップ --- */
+    .week-heatmap{display:grid;grid-template-columns:32px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
+    .week-heatmap .cell{aspect-ratio:1/1;border-radius:2px}
+    .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
     .footer-note{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 32px}
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
@@ -375,8 +379,18 @@
   <main>
     <!-- メイン画面 -->
     <section id="tab-main">
-      <div id="summaryCard" class="summary-card"></div>
-      <div id="weekCard" class="summary-card"></div>
+      <div id="summaryCard" class="summary-card">
+        <div id="summaryGoalTabs" class="tabs" style="margin-bottom:6px;"></div>
+        <div id="summaryContent"></div>
+      </div>
+      <div id="weekCard" class="summary-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span id="weekRange" style="font-weight:bold"></span>
+          <input type="week" id="weekPicker" style="max-width:120px;">
+        </div>
+        <div id="weekHeatmap"></div>
+        <div id="weekTable"></div>
+      </div>
       <div class="flex-split">
         <!-- カレンダー -->
         <div class="calendar-card">
@@ -474,6 +488,7 @@
         </div>
         <div class="hint" id="goalDaysLeft" style="margin-top:6px"></div>
         <div class="hint" id="goalCatHint" style="margin-top:4px"></div>
+        <div id="activeGoalList" class="goal-list-card" style="margin-top:10px"></div>
         </div>
         </section>
         <section class="goal-card">
@@ -527,6 +542,13 @@
     const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
     let entries=load(KEYS.entries,[]),categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),goals=load(KEYS.goals,[]);
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
+    const startOfWeek=d=>{const t=new Date(d);const diff=(t.getDay()+6)%7;t.setDate(t.getDate()-diff);t.setHours(0,0,0,0);return t;};
+    const weekStrFromDate=d=>{const t=new Date(d);t.setDate(t.getDate()+3);const first=new Date(t.getFullYear(),0,1);const week=Math.floor((t-first)/604800000)+1;return `${t.getFullYear()}-W${pad(week)}`;};
+    const weekStrToDate=s=>{const [y,w]=s.split('-W').map(Number);const d=new Date(y,0,1);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+(w-1)*7);return startOfWeek(d);};
+    let currentWeekStart=startOfWeek(new Date());
+    let summaryGoalIndex=0;
+    const activeGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.start)<=today&&parseDateStr(g.end)>=today);};
+    const pastGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.end)<today);};
     const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
 
     // --- タブ制御
@@ -540,21 +562,26 @@
       for(const btn of tabBtns){btn.classList.toggle('active',btn.dataset.tab===name);}
       Object.entries(sections).forEach(([k,sec])=>{sec.style.display=(k===name)?'block':'none';});
       if(name==='main') {renderSummary(); renderWeek(); renderMonth();}
-      if(name==='goal') {renderGoal(); renderGoalHistory();}
+      if(name==='goal') {renderGoal(); renderActiveGoals(); renderGoalHistory();}
       if(name==='cats') renderCats();
     }
     document.getElementById('tabs').addEventListener('click',e=>{
       const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;setTab(t.dataset.tab);
     });
+    document.getElementById('summaryGoalTabs').addEventListener('click',e=>{
+      const i=e.target?.dataset?.selgoal;
+      if(i!==undefined){summaryGoalIndex=Number(i);renderSummary();}
+    });
 
     // --- サマリー（メイン画面上部カード）
     function renderSummary() {
-      const wrap = document.getElementById('summaryCard');
-      if (!entries.length) {
-        wrap.innerHTML = '<div class="muted">まだ記録がありません。</div>'; return;
-      }
-      // 目標
-      const goal = latestGoal();
+      const wrap=document.getElementById('summaryContent');
+      const tabWrap=document.getElementById('summaryGoalTabs');
+      if(!entries.length){wrap.innerHTML='<div class="muted">まだ記録がありません。</div>';tabWrap.innerHTML='';return;}
+      const goalsAct=activeGoals();
+      if(summaryGoalIndex>=goalsAct.length) summaryGoalIndex=0;
+      tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
+      const goal=goalsAct[summaryGoalIndex];
       // 合計
       let totalMin = entries.reduce((a,b)=>a+b.minutes,0);
       if(goal && goal.start && goal.end){
@@ -619,19 +646,30 @@
     }
 
     function renderWeek(){
-      const wrap=document.getElementById('weekCard');
-      const start=new Date();start.setDate(start.getDate()-6);
+      const heatEl=document.getElementById('weekHeatmap');
+      const tableEl=document.getElementById('weekTable');
+      const picker=document.getElementById('weekPicker');
+      const rangeEl=document.getElementById('weekRange');
+      const start=currentWeekStart;
+      const end=new Date(start);end.setDate(end.getDate()+6);
+      picker.value=weekStrFromDate(start);
+      rangeEl.textContent=`${dateToStr(start)}〜${dateToStr(end)}`;
       const rows=[];
+      const heat=Array.from({length:7},()=>Array(24).fill(0));
       for(let i=0;i<7;i++){
         const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
         const key=dateToStr(d);
-        const list=entries.filter(e=>e.date===key).sort((a,b)=>{
-          const t1=a.startTime||'',t2=b.startTime||'';return t1.localeCompare(t2);
-        });
+        const list=entries.filter(e=>e.date===key).sort((a,b)=>{const t1=a.startTime||'',t2=b.startTime||'';return t1.localeCompare(t2);});
         const times=list.map(e=>`${e.startTime||''}～${e.endTime||''} <span class="chip muted">${e.category}</span>`).join('<br>');
         rows.push(`<tr><td>${key}</td><td>${times||'<span class="muted">記録なし</span>'}</td></tr>`);
+        list.forEach(e=>{if(!e.startTime||!e.endTime)return;const [sh,sm]=e.startTime.split(':').map(Number);const [eh,em]=e.endTime.split(':').map(Number);let st=sh*60+sm,et=eh*60+em;for(let h=0;h<24;h++){const hs=h*60,he=(h+1)*60;const overlap=Math.max(0,Math.min(et,he)-Math.max(st,hs));heat[i][h]+=overlap;}});
       }
-      wrap.innerHTML=`<div style="font-weight:bold">直近1週間の記録</div><table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
+      const max=heat.flat().reduce((a,b)=>Math.max(a,b),0);
+      let heatHtml='<div class="week-heatmap"><div></div>';
+      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);heatHtml+=`<div style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;}
+      for(let h=0;h<24;h++){heatHtml+=`<div class="hour-label">${pad(h)}</div>`;for(let d=0;d<7;d++){const v=heat[d][h];const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));heatHtml+=`<div class="cell lvl${lvl}"></div>`;}}heatHtml+='</div>';
+      heatEl.innerHTML=heatHtml;
+      tableEl.innerHTML=`<table class="week-table"><tbody>${rows.join('')}</tbody></table>`;
     }
 
     // --- カテゴリ選択
@@ -657,6 +695,7 @@
     }
     minEl.addEventListener('input',estimateTimes);
     dateEl.addEventListener('change',estimateTimes);
+    document.getElementById('weekPicker').addEventListener('change',e=>{currentWeekStart=weekStrToDate(e.target.value);renderWeek();});
 
     // 記録
     form.addEventListener('submit',e=>{
@@ -730,6 +769,7 @@
       renderWeek();
       renderMonth();
       renderGoal();
+      renderActiveGoals();
       renderGoalHistory();
       if(activeDayDetail) renderDayDetails(activeDayDetail);
       const btn=document.elementFromPoint(clientX,clientY);
@@ -845,7 +885,7 @@
     const goalForm=document.getElementById('goalForm'),goalStart=document.getElementById('goalStart'),goalEnd=document.getElementById('goalEnd'),goalHours=document.getElementById('goalHours'),
       goalBar=document.getElementById('goalBar'),goalAccum=document.getElementById('goalAccum'),goalTarget=document.getElementById('goalTarget'),goalPct=document.getElementById('goalPct'),
       goalRangeHint=document.getElementById('goalRangeHint'),goalDaysLeft=document.getElementById('goalDaysLeft'),goalDeleteBtn=document.getElementById('goalDeleteBtn'),
-      goalHistory=document.getElementById('goalHistory');
+      goalHistory=document.getElementById('goalHistory'),activeGoalList=document.getElementById('activeGoalList');
     function goalStats(g){
       const s=parseDateStr(g.start),e=parseDateStr(g.end);
       const accum=entries.filter(x=>{
@@ -881,30 +921,37 @@
       goalDaysLeft.textContent=g?left:'';
       goalCatHint.textContent=g?`カテゴリ: ${g.category&&g.category!=='all'?g.category:'全て'}`:'';
     }
+    function renderActiveGoals(){
+      const acts=activeGoals();
+      if(!acts.length){activeGoalList.innerHTML='<div class="muted">現在の目標なし</div>';return;}
+      activeGoalList.innerHTML='<h3 style="margin:8px 0 6px 4px;">現在の目標</h3>'+
+        acts.map(g=>{const idx=goals.indexOf(g);const s=goalStats(g);return `<div class="goal-hist-item"><div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div><div class="goal-hist-kpis"><span class="gh-kpi">累計: <b>${fmt(s.accum/60,1)}h</b></span><span class="gh-kpi">目標: <b>${fmt(g.targetMin/60,1)}h</b></span><span class="gh-kpi">達成率: <b>${fmt(s.pct)}%</b></span></div><button class="goal-hist-del-btn" data-goaldel="${idx}">×</button></div>`;}).join('');
+    }
     // 目標履歴
     function renderGoalHistory(){
-      if(!goals.length){goalHistory.innerHTML='<div class="muted">目標履歴なし</div>';return;}
-      goalHistory.innerHTML='<h3 style="margin:8px 0 6px 4px;">過去の目標</h3>' +
-        goals.slice(0,-1).reverse().map((g,i)=>{
-          const stats=goalStats(g);
-          return `<div class="goal-hist-item">
+      const past=pastGoals();
+      if(!past.length){goalHistory.innerHTML='<div class="muted">過去の目標なし</div>';return;}
+      goalHistory.innerHTML='<h3 style="margin:8px 0 6px 4px;">過去の目標</h3>'+
+        past.slice().reverse().map(g=>{const idx=goals.indexOf(g);const stats=goalStats(g);return `<div class="goal-hist-item">
             <div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div>
             <div class="goal-hist-kpis">
               <span class="gh-kpi">累計: <b>${fmt(stats.accum/60,1)}h</b></span>
               <span class="gh-kpi">目標: <b>${fmt(g.targetMin/60,1)}h</b></span>
               <span class="gh-kpi">達成率: <b>${fmt(stats.pct)}%</b></span>
             </div>
-            <button class="goal-hist-del-btn" data-goaldel="${goals.length-2-i}">×</button>
-          </div>`;
-        }).join('');
+            <button class="goal-hist-del-btn" data-goaldel="${idx}">×</button>
+          </div>`;}).join('');
     }
-    goalHistory.addEventListener('click',e=>{
+    document.getElementById('tab-goal').addEventListener('click',e=>{
       const idx=e.target?.dataset?.goaldel;
       if(idx!==undefined){
         const {clientX, clientY}=e;
         goals.splice(idx,1);
         save(KEYS.goals,goals);
         renderGoalHistory();
+        renderActiveGoals();
+        renderSummary();
+        renderWeek();
         const btn=document.elementFromPoint(clientX,clientY);
         if(btn?.classList.contains('goal-hist-del-btn')){
           btn.style.background='var(--muted)';
@@ -923,13 +970,13 @@
       const start=goalStart.value,end=goalEnd.value,hours=Number(goalHours.value||0),cat=goalCatSel.value||'all';
       if(!start||!end||!hours)return;
       goals.push({start,end,targetMin:hours*60,category:cat});
-      save(KEYS.goals,goals);toast('保存');renderGoal();renderGoalHistory();renderSummary();renderWeek();
+      save(KEYS.goals,goals);toast('保存');renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
     });
     goalDeleteBtn.addEventListener('click',()=>{
       if(!goals.length) return;
       if(!confirm('最新の目標を削除しますか？'))return;
       goals.pop();
-      save(KEYS.goals,goals);renderGoal();renderGoalHistory();renderSummary();renderWeek();
+      save(KEYS.goals,goals);renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
     });
 
     // --- カテゴリ管理
@@ -981,7 +1028,7 @@
     });
 
     // --- 全体レンダリング
-    function renderAll(){renderCategorySelect();renderSummary();renderWeek();renderMonth();renderGoal();renderGoalHistory();renderCats();}
+    function renderAll(){renderCategorySelect();renderSummary();renderWeek();renderMonth();renderGoal();renderActiveGoals();renderGoalHistory();renderCats();}
     function init(){dateEl.value=todayStr();estimateTimes();renderAll();}
     init();
 
