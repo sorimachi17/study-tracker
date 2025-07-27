@@ -665,6 +665,7 @@
     });
     dayDetails.addEventListener('click',e=>{
       const id=e.target?.dataset?.del;if(!id)return;
+      const {clientX, clientY}=e;
       entries=entries.filter(x=>String(x.id)!==String(id));
       save(KEYS.entries,entries);
       toast('削除しました');
@@ -673,6 +674,13 @@
       renderGoal();
       renderGoalHistory();
       if(activeDayDetail) renderDayDetails(activeDayDetail);
+      const btn=document.elementFromPoint(clientX,clientY);
+      if(btn?.classList.contains('del-btn')){
+        btn.style.background='var(--muted)';
+        btn.addEventListener('mouseleave',()=>{
+          btn.style.background='';
+        },{once:true});
+      }
     });
 
     prevMonthBtn.addEventListener('click',()=>{if(currentYM.m===0){currentYM.y--;currentYM.m=11;}else currentYM.m--;renderMonth();});
