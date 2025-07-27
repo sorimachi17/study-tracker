@@ -496,7 +496,13 @@
       // 目標
       const goal = latestGoal();
       // 合計
-      const totalMin = entries.reduce((a,b)=>a+b.minutes,0);
+      let totalMin = entries.reduce((a,b)=>a+b.minutes,0);
+      if(goal && goal.start && goal.end){
+        const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
+        totalMin = entries
+          .filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e;})
+          .reduce((a,b)=>a+b.minutes,0);
+      }
       const totalH = (totalMin/60).toFixed(1);
       // 記録開始日数:目標開始基準
       let startDate = entries.map(e=>e.date).sort()[0];
