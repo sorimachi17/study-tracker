@@ -291,31 +291,24 @@
     .toast.show{opacity:1}
     /* カテゴリリスト（元のシンプルver） */
     .cat-list-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 7px 0 7px 4px;
-    border-bottom: 1px solid rgba(180,180,180,.11);
+      display:flex;align-items:center;gap:6px;
+      padding:7px 0 7px 4px;
+      border-bottom:1px solid rgba(180,180,180,.11);
     }
     .cat-chip {
-    background: var(--chip-muted);
-    color: var(--chip-text);
-    border-radius: 12px;
-    padding: 5px 14px;
-    font-size: 14px;
-    margin-right: 4px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+      background:var(--chip-muted);
+      color:var(--chip-text);
+      border-radius:12px;
+      padding:5px 14px;
+      font-size:14px;
+      margin-right:4px;
+      height:28px;
+      display:flex;align-items:center;justify-content:center;
+      flex:1 1 auto;white-space:nowrap;
     }
-    .cat-list-row .tab-btn, .cat-list-row .tab-btn.danger {
-    font-size: 13px;
-    padding: 2px 13px;
-    border-radius: 9px;
-    min-width: 0;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger {
+      font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
     }
 
   </style>
