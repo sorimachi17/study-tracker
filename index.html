@@ -127,6 +127,13 @@
     .lvl3{background:var(--lvl3)}
     .lvl4{background:var(--lvl4)}
     .day.today{outline:2px solid var(--accent);outline-offset:0}
+    /* 年間カレンダー */
+    .year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+    .mini-month{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px;cursor:pointer;}
+    .mini-month-name{text-align:center;font-size:12px;color:var(--muted);margin-bottom:2px;}
+    .mini-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+    .mini-day{aspect-ratio:1/1;font-size:9px;border-radius:2px;display:flex;align-items:center;justify-content:center;}
+    .mini-day.today{outline:1px solid var(--accent);}
     .day-detail-wrap {
       background:var(--card);
       border-radius:11px;
@@ -345,10 +352,19 @@
             <button id="prevMonth" class="calendar-nav-btn">&lt;</button>
             <div id="monthTitle" class="calendar-title-btn"></div>
             <button id="nextMonth" class="calendar-nav-btn">&gt;</button>
+            <button id="toggleYear" class="calendar-nav-btn">年</button>
           </div>
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
           <div id="dayDetails" style="margin-top:10px"></div>
+          <div id="yearView" style="display:none">
+            <div class="calendar-head">
+              <button id="prevYear" class="calendar-nav-btn">&lt;</button>
+              <div id="yearTitle" class="calendar-title-btn"></div>
+              <button id="nextYear" class="calendar-nav-btn">&gt;</button>
+            </div>
+            <div id="yearGrid" class="year-grid"></div>
+          </div>
         </div>
         <!-- 記録入力 -->
         <div class="records-card">
@@ -574,9 +590,21 @@
     });
 
     // --- カレンダー表示 + 月選択モーダル
-    const dowRow=document.getElementById('dowRow'),monthGrid=document.getElementById('monthGrid'),monthTitle=document.getElementById('monthTitle'),prevMonthBtn=document.getElementById('prevMonth'),nextMonthBtn=document.getElementById('nextMonth'),dayDetails=document.getElementById('dayDetails');
+    const dowRow=document.getElementById('dowRow'),
+      monthGrid=document.getElementById('monthGrid'),
+      monthTitle=document.getElementById('monthTitle'),
+      prevMonthBtn=document.getElementById('prevMonth'),
+      nextMonthBtn=document.getElementById('nextMonth'),
+      dayDetails=document.getElementById('dayDetails'),
+      toggleYearBtn=document.getElementById('toggleYear'),
+      yearView=document.getElementById('yearView'),
+      yearGrid=document.getElementById('yearGrid'),
+      yearTitle=document.getElementById('yearTitle'),
+      prevYearBtn=document.getElementById('prevYear'),
+      nextYearBtn=document.getElementById('nextYear');
     const DOW=['月','火','水','木','金','土','日'];
     let currentYM={y:new Date().getFullYear(),m:new Date().getMonth()};
+    let currentYear=currentYM.y;
     function renderMonth(){
       dowRow.innerHTML=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
       const y=currentYM.y,m=currentYM.m;monthTitle.textContent=fmtDateLabel(new Date(y,m,1));
@@ -616,6 +644,70 @@
 
     prevMonthBtn.addEventListener('click',()=>{if(currentYM.m===0){currentYM.y--;currentYM.m=11;}else currentYM.m--;renderMonth();});
     nextMonthBtn.addEventListener('click',()=>{if(currentYM.m===11){currentYM.y++;currentYM.m=0;}else currentYM.m++;renderMonth();});
+
+    function renderMiniMonth(y,m){
+      const lastDate=new Date(y,m+1,0).getDate();
+      const totals={};let monthMax=0;
+      for(let d=1;d<=lastDate;d++){
+        const key=`${y}-${pad(m+1)}-${pad(d)}`;
+        const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
+        totals[key]=sum;monthMax=Math.max(monthMax,sum);
+      }
+      const firstDow=(new Date(y,m,1).getDay()+6)%7;
+      const blanks=Array.from({length:firstDow},()=>'<div class="mini-day"></div>').join('');
+      const days=Array.from({length:lastDate},(_,i)=>{
+        const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`;
+        const sum=totals[key]||0;
+        const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));
+        const today=key===todayStr()? 'today' : '';
+        return `<div class="mini-day lvl${level} ${today}">${d}</div>`;
+      }).join('');
+      return `<div class="mini-month" data-y="${y}" data-m="${m}"><div class="mini-month-name">${m+1}月</div><div class="mini-month-grid">${blanks+days}</div></div>`;
+    }
+
+    function renderYear(){
+      yearTitle.textContent=currentYear+'年';
+      yearGrid.innerHTML=Array.from({length:12},(_,i)=>renderMiniMonth(currentYear,i)).join('');
+    }
+
+    toggleYearBtn.addEventListener('click',()=>{
+      const show=yearView.style.display==='none';
+      if(show){
+        yearView.style.display='block';
+        dowRow.style.display='none';
+        monthGrid.style.display='none';
+        dayDetails.style.display='none';
+        prevMonthBtn.style.display='none';
+        nextMonthBtn.style.display='none';
+        toggleYearBtn.textContent='月';
+        currentYear=currentYM.y;
+        renderYear();
+      }else{
+        yearView.style.display='none';
+        dowRow.style.display='grid';
+        monthGrid.style.display='grid';
+        dayDetails.style.display='';
+        prevMonthBtn.style.display='';
+        nextMonthBtn.style.display='';
+        toggleYearBtn.textContent='年';
+      }
+    });
+    prevYearBtn.addEventListener('click',()=>{currentYear--;renderYear();});
+    nextYearBtn.addEventListener('click',()=>{currentYear++;renderYear();});
+    yearGrid.addEventListener('click',e=>{
+      const t=e.target.closest('.mini-month');
+      if(!t)return;
+      const y=parseInt(t.dataset.y),m=parseInt(t.dataset.m);
+      currentYM={y,m};
+      yearView.style.display='none';
+      dowRow.style.display='grid';
+      monthGrid.style.display='grid';
+      dayDetails.style.display='';
+      prevMonthBtn.style.display='';
+      nextMonthBtn.style.display='';
+      toggleYearBtn.textContent='年';
+      renderMonth();
+    });
     // 月選択モーダル制御
     const monthModal=document.getElementById('monthModal');
     monthTitle.addEventListener('click',()=>{
