@@ -812,7 +812,20 @@
     goalHistory.addEventListener('click',e=>{
       const idx=e.target?.dataset?.goaldel;
       if(idx!==undefined){
-        goals.splice(idx,1); save(KEYS.goals,goals); renderGoalHistory(); toast('削除しました');
+        const {clientX, clientY}=e;
+        goals.splice(idx,1);
+        save(KEYS.goals,goals);
+        renderGoalHistory();
+        const btn=document.elementFromPoint(clientX,clientY);
+        if(btn?.classList.contains('goal-hist-del-btn')){
+          btn.style.background='var(--muted)';
+          btn.style.color='var(--bg)';
+          btn.addEventListener('mouseleave',()=>{
+            btn.style.background='';
+            btn.style.color='';
+          },{once:true});
+        }
+        toast('削除しました');
       }
     });
 
