@@ -788,12 +788,12 @@
       toast('削除しました');
       renderSummary();
       renderWeek();
-      renderMonth();
       renderYear();
       renderGoal();
       renderActiveGoals();
       renderGoalHistory();
       if(activeDayDetail) renderDayDetails(activeDayDetail);
+      renderMonth();
       setCalendarView(calendarViewSel.value);
       const btn = document.elementFromPoint(clientX, clientY);
       if(row) row.remove();
