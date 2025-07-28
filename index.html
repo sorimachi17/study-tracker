@@ -56,7 +56,7 @@
       padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);
     }
     h1{margin:0;font-size:18px}
-    .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;}
+    .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;flex-wrap:wrap;}
     .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:7px 13px;border-radius:999px;font-size:13px;}
     .tab-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
     main{padding:12px;max-width:980px;margin:0 auto}
@@ -197,6 +197,13 @@
     .cat-chip{background:var(--chip-muted);color:var(--chip-text);border-radius:12px;padding:5px 14px;font-size:14px;margin-right:4px;height:28px;display:flex;align-items:center;justify-content:center;flex:1 1 auto;white-space:nowrap;}
     .cat-list-row .cat-chip{cursor:pointer;}
     .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger{font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:auto;}
+
+    /* メイン画面レイアウト調整 */
+    .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
+    .calendar-card,.records-card{flex:1;min-width:260px;}
+    .records-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(30,40,45,0.07);}
+    select{height:48px;}
+    .minutes-block input{max-width:140px;}
   </style>
 </head>
 <body>
@@ -257,7 +264,7 @@
                 <label>カテゴリ</label>
                 <select id="category"></select>
               </div>
-              <div class="input-block">
+              <div class="input-block minutes-block">
                 <label>勉強時間 (m)</label>
                 <input type="text" id="minutes" placeholder="例: 45" required autocomplete="off">
               </div>
