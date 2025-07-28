@@ -308,25 +308,9 @@
             <button class="primary" type="submit">保存</button>
             <button class="danger" type="button" id="goalDeleteBtn">削除</button>
           </div>
-        </form>
-        <div class="progress-wrap">
-          <div class="inline" style="justify-content:space-between">
-            <div><strong>目標期間</strong></div>
-            <div class="hint" id="goalRangeHint"></div>
-          </div>
-          <div class="progress" style="margin-top:8px">
-            <div id="goalBar" class="progress-inner"></div>
-          </div>
-          <div class="kpis">
-            <div class="item"><div>累計</div><div id="goalAccum" style="font-weight:700"></div></div>
-            <div class="item"><div>目標</div><div id="goalTarget" style="font-weight:700"></div></div>
-            <div class="item"><div>達成率</div><div id="goalPct" style="font-weight:700"></div></div>
-          </div>
-          <div class="hint" id="goalDaysLeft" style="margin-top:6px"></div>
-          <div class="hint" id="goalCatHint" style="margin-top:4px"></div>
+          </form>
           <div id="activeGoalList" class="goal-list-card" style="margin-top:10px"></div>
-        </div>
-      </section>
+        </section>
       <section class="goal-card">
         <div class="goal-list-card" id="goalHistory"></div>
       </section>
@@ -767,20 +751,13 @@
     };
 
     // --- 目標管理
-    const goalForm=document.getElementById('goalForm'),
-          goalStart=document.getElementById('goalStart'),
-          goalEnd=document.getElementById('goalEnd'),
-          goalHours=document.getElementById('goalHours'),
-          goalBar=document.getElementById('goalBar'),
-          goalAccum=document.getElementById('goalAccum'),
-          goalTarget=document.getElementById('goalTarget'),
-          goalPct=document.getElementById('goalPct'),
-          goalRangeHint=document.getElementById('goalRangeHint'),
-          goalDaysLeft=document.getElementById('goalDaysLeft'),
-          goalDeleteBtn=document.getElementById('goalDeleteBtn'),
-          goalHistory=document.getElementById('goalHistory'),
-          activeGoalList=document.getElementById('activeGoalList'),
-          goalCatHint=document.getElementById('goalCatHint');
+      const goalForm=document.getElementById('goalForm'),
+            goalStart=document.getElementById('goalStart'),
+            goalEnd=document.getElementById('goalEnd'),
+            goalHours=document.getElementById('goalHours'),
+            goalDeleteBtn=document.getElementById('goalDeleteBtn'),
+            goalHistory=document.getElementById('goalHistory'),
+            activeGoalList=document.getElementById('activeGoalList');
 
     function goalStats(g){
       const s=parseDateStr(g.start),e=parseDateStr(g.end);
@@ -798,20 +775,7 @@
       const g = latestGoal();
       if(g){goalStart.value=g.start;goalEnd.value=g.end;goalHours.value=Math.round(g.targetMin/60);goalCatSel.value=g.category||'all';}
       else {goalStart.value='';goalEnd.value='';goalHours.value='';goalCatSel.value='all';}
-      goalRangeHint.textContent=g?`${g.start}〜${g.end}`:'未設定';
-      let accum=0,target=0,pct=0,left='';
-      if(g){
-        const stats=goalStats(g);
-        accum=stats.accum;target=stats.target;pct=stats.pct;
-        const daysLeft=Math.max(0,Math.ceil((parseDateStr(g.end)-new Date())/86400000));
-        left=`終了まで残り ${fmt(daysLeft)} 日`;
-      }
-      goalBar.style.width=pct+'%';
-      goalAccum.textContent=g?`${fmt(accum/60,1)}h (${fmt(accum)}m)`:'—';
-      goalTarget.textContent=g?`${fmt(target/60,1)}h (${fmt(target)}m)`:'—';
-      goalPct.textContent=g?`${fmt(pct)}%`:'—';
-      goalDaysLeft.textContent=g?left:'';
-      goalCatHint.textContent=g?`カテゴリ: ${g.category&&g.category!=='all'?g.category:'全て'}`:'';
+      // no additional summary to render
     }
     function renderActiveGoals(){
       const acts=activeGoals();
