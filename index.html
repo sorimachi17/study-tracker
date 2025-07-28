@@ -620,6 +620,7 @@
         return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?fmt(sum)+'m':''}</div></div>`;
       }).join('');
       dayDetails.innerHTML='';
+      if(activeDayDetail) renderDayDetails(activeDayDetail);
     }
 
     function renderDayDetails(d){
@@ -895,7 +896,13 @@
       renderGoal();renderActiveGoals();renderGoalHistory();renderCats();
       setCalendarView(calendarViewSel.value);
     }
-    function init(){document.getElementById('date').value=todayStr();estimateTimes();renderAll();}
+    function init(){
+      const today = todayStr();
+      document.getElementById('date').value = today;
+      estimateTimes();
+      renderAll();
+      renderDayDetails(today);
+    }
     init();
 
   })();
