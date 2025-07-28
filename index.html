@@ -441,8 +441,8 @@
       const wrap=document.getElementById('summaryContent');
       const tabWrap=document.getElementById('summaryGoalTabs');
       if(!entries.length){wrap.innerHTML='<div class="muted">まだ記録がありません。</div>';tabWrap.innerHTML='';return;}
-      // ★アクティブ目標を「新しい順」で表示（左＝新、右＝古）
-      const goalsAct=activeGoals().slice().reverse();
+      // ★アクティブ目標を古い順で表示（左＝古、右＝新）
+      const goalsAct=activeGoals().slice();
       if(summaryGoalIndex>=goalsAct.length) summaryGoalIndex=0;
       tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
       const goal=goalsAct[summaryGoalIndex];
