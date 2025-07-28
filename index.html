@@ -830,6 +830,7 @@
       catList.innerHTML=categories.map((c,i)=>`
         <div class="cat-list-row">
           <span class="cat-chip">${c}</span>
+          <button class="tab-btn" data-edit="${i}">編集</button>
           <button class="tab-btn" data-up="${i}">↑</button>
           <button class="tab-btn" data-down="${i}">↓</button>
           <button class="tab-btn danger" data-del="${i}">削除</button>
@@ -841,9 +842,24 @@
       categories.push(name);save(KEYS.cats,categories);newCat.value='';renderCategorySelect();renderCats();toast('追加しました');
     });
     catList.addEventListener('click',e=>{
-      const i=e.target?.dataset?.del;if(i!==undefined){
-        const name=categories[i],used=entries.some(x=>x.category===name);
-        if(used){alert('このカテゴリの記録が存在します。先に記録を変更/削除してください。');return;}
+      const edit=e.target?.dataset?.edit;
+      if(edit!==undefined){
+        const idx=Number(edit),oldName=categories[idx];
+        const name=prompt('カテゴリ名を編集',oldName);
+        if(!name) return;
+        const trimmed=name.trim();
+        if(!trimmed||trimmed===oldName) return;
+        if(categories.includes(trimmed)){toast('既に存在します');return;}
+        categories[idx]=trimmed;
+        entries.forEach(r=>{if(r.category===oldName) r.category=trimmed;});
+        goals.forEach(g=>{if(g.category===oldName) g.category=trimmed;});
+        save(KEYS.entries,entries);save(KEYS.cats,categories);save(KEYS.goals,goals);
+        renderAll();toast('更新しました');return;
+      }
+      const i=e.target?.dataset?.del;
+      if(i!==undefined){
+        const name=categories[i],used=entries.some(x=>x.category===name)||goals.some(g=>g.category===name);
+        if(used){alert('このカテゴリの記録または目標が存在します。先に記録/目標を変更・削除してください。');return;}
         categories.splice(i,1);save(KEYS.cats,categories);renderCategorySelect();renderCats();toast('削除しました');return;}
       const up=e.target?.dataset?.up,down=e.target?.dataset?.down;
       if(up!==undefined){const idx=Number(up);if(idx>0){[categories[idx-1],categories[idx]]=[categories[idx],categories[idx-1]];save(KEYS.cats,categories);renderCategorySelect();renderCats();}}
