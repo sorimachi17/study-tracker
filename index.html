@@ -390,13 +390,13 @@
       const s = parseDateStr(goal.start);
       const e = parseDateStr(goal.end);
       const today = new Date();
-      const until = new Date(Math.min(e.getTime(), today.getTime())); // 予測に使う観測期間の終点
-      // 経過日数（開始日/終点とも日付ベース、両端含む）
+      const until = new Date(Math.min(e.getTime(), today.getTime())); // 観測期間の終点
+      // 経過日数（両端含む）
       const elapsedDays = Math.max(1, Math.floor((until - s)/86400000) + 1);
-      const avgPerDay = achievedMin / elapsedDays;
-      if(avgPerDay <= 0) return { text:'—' };
-      const remain = target - achievedMin;
-      const estDays = Math.ceil(remain / avgPerDay);
+      const ratio = achievedMin / target;
+      if(ratio <= 0) return { text:'—' };
+      // 進捗比率から残日数を算出
+      const estDays = Math.ceil(elapsedDays * (1 - ratio) / ratio);
       const eta = new Date(today);
       eta.setDate(today.getDate() + estDays);
       const text = `${fmt(estDays)}日後（${eta.getFullYear()}/${pad(eta.getMonth()+1)}/${pad(eta.getDate())}）`;
