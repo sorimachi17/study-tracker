@@ -93,14 +93,8 @@
     .summary-kpi { font-size: 26px; font-weight: bold; }
     .summary-list { display: grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
     @media (max-width:600px) {.summary-list { grid-template-columns:1fr; } }
-    .summary-progress-bar {
-      width:100%;height:11px;border-radius:7px;background:var(--lvl0);
-      margin:10px 0 4px 0;overflow:hidden;
-    }
-    .summary-progress-bar-inner {
-      height:100%;border-radius:7px;background:var(--accent);
-      transition:.25s;width:0;
-    }
+    .summary-progress-bar { width:100%;height:11px;border-radius:7px;background:var(--lvl0);margin:10px 0 4px 0;overflow:hidden; }
+    .summary-progress-bar-inner { height:100%;border-radius:7px;background:var(--accent);transition:.25s;width:0; }
 
     /* 共通プログレスバー */
     .progress{width:100%;height:10px;border-radius:8px;background:var(--lvl0);overflow:hidden;}
@@ -183,6 +177,17 @@
     .week-heatmap .week-date{cursor:pointer}
     .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
 
+    /* フォームまわり（時刻入力→時間選択 & 余白調整） */
+    .form-row-flex {display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;}
+    @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
+    .input-block {flex:1;}
+    .time-input-row {display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px;} /* ← 余白追加 */
+    .time-input-row label {font-size:12px;color:var(--muted);}
+    .time-fields {display:flex;gap:8px;flex:1 1 0;min-width:0;}
+    .time-fields input[type="time"]{flex:1 1 0;min-width:100px;max-width:160px;text-align:center;padding:10px;font-size:15px;}
+    .entry-submit-row {display:flex;justify-content:center;margin-top:6px;margin-bottom:0;} /* ボタンとの隙間は上の行で確保 */
+    .entry-submit-row button {max-width:220px;width:80%;font-size:16px;padding:15px 0;border-radius:12px;}
+
     /* トースト */
     .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
     .toast.show{opacity:1}
@@ -259,9 +264,10 @@
             <div class="time-input-row">
               <label>開始・終了時刻</label>
               <div class="time-fields">
-                <input type="text" id="startTime" maxlength="5" placeholder="HH:MM">
+                <!-- 時間選択に変更 -->
+                <input type="time" id="startTime" step="60">
                 <span style="line-height:1.8;">～</span>
-                <input type="text" id="endTime" maxlength="5" placeholder="HH:MM">
+                <input type="time" id="endTime" step="60">
               </div>
             </div>
             <div class="entry-submit-row">
@@ -369,7 +375,9 @@
     const toast=msg=>{const t=document.getElementById('toast');if(!t) return;t.textContent=msg||'保存しました';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400);};
     const load=(k,fallback)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??fallback}catch(e){return fallback}};
     const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-    let entries=load(KEYS.entries,[]),categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),goals=load(KEYS.goals,[]);
+    let entries=load(KEYS.entries,[]),
+        categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),
+        goals=load(KEYS.goals,[]);
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
     const startOfWeek=d=>{const t=new Date(d);const diff=(t.getDay()+6)%7;t.setDate(t.getDate()-diff);t.setHours(0,0,0,0);return t;};
     const fmtWeekLabel=start=>{const end=new Date(start);end.setDate(start.getDate()+6);return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}`;};
@@ -379,7 +387,7 @@
     const pastGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.end)<today);};
     const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
 
-    // ★ hover抑止ヘルパ
+    // ★ hover抑止ヘルパ（削除直後に他の×が赤くならないように）
     function suppressHover(container, selector){
       const btns = container.querySelectorAll(selector);
       if(!btns.length) return;
@@ -387,6 +395,27 @@
       const clear = () => btns.forEach(b => b.classList.remove('no-hover'));
       window.addEventListener('mousemove', clear, { once: true });
       setTimeout(clear, 400);
+    }
+
+    // --- 目標到達予測（見直し版）
+    function estimateGoalETA(goal, achievedMin){
+      const target = goal?.targetMin || 0;
+      if(!goal || !target) return { text:'—' };
+      if(achievedMin >= target) return { text:'達成済み' };
+      const s = parseDateStr(goal.start);
+      const e = parseDateStr(goal.end);
+      const today = new Date();
+      const until = new Date(Math.min(e.getTime(), today.getTime())); // 予測に使う観測期間の終点
+      // 経過日数（開始日/終点とも日付ベース、両端含む）
+      const elapsedDays = Math.max(1, Math.floor((until - s)/86400000) + 1);
+      const avgPerDay = achievedMin / elapsedDays;
+      if(avgPerDay <= 0) return { text:'—' };
+      const remain = target - achievedMin;
+      const estDays = Math.ceil(remain / avgPerDay);
+      const eta = new Date(today);
+      eta.setDate(today.getDate() + estDays);
+      const text = `${fmt(estDays)}日後（${eta.getFullYear()}/${pad(eta.getMonth()+1)}/${pad(eta.getDate())}）`;
+      return { text, eta };
     }
 
     // --- タブ制御
@@ -407,21 +436,31 @@
       if(i!==undefined){summaryGoalIndex=Number(i);renderSummary();}
     });
 
-    // --- サマリー
+    // --- サマリー（メイン上部）
     function renderSummary() {
       const wrap=document.getElementById('summaryContent');
       const tabWrap=document.getElementById('summaryGoalTabs');
       if(!entries.length){wrap.innerHTML='<div class="muted">まだ記録がありません。</div>';tabWrap.innerHTML='';return;}
-      const goalsAct=activeGoals();
+      // ★アクティブ目標を「新しい順」で表示（左＝新、右＝古）
+      const goalsAct=activeGoals().slice().reverse();
       if(summaryGoalIndex>=goalsAct.length) summaryGoalIndex=0;
       tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
       const goal=goalsAct[summaryGoalIndex];
+
+      // 合計（目標が選ばれていれば期間＆カテゴリで絞る）
       let totalMin = entries.reduce((a,b)=>a+b.minutes,0);
       if(goal && goal.start && goal.end){
         const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
-        totalMin = entries.filter(x=>{const d=parseDateStr(x.date);return d>=s&&d<=e && (goal.category==='all' || !goal.category || x.category===goal.category);}).reduce((a,b)=>a+b.minutes,0);
+        totalMin = entries
+          .filter(x=>{
+            const d=parseDateStr(x.date);
+            return d>=s&&d<=e && (goal.category==='all' || !goal.category || x.category===goal.category);
+          })
+          .reduce((a,b)=>a+b.minutes,0);
       }
       const totalH = fmt(totalMin/60,1);
+
+      // カテゴリ内訳（目標期間で制限）
       const rangeEntries = entries.filter(x=>{
         if(goal && goal.start && goal.end){
           const d=parseDateStr(x.date);
@@ -429,34 +468,30 @@
         }
         return true;
       });
-      const catTotals={};rangeEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
-      let startDate = entries.map(e=>e.date).sort()[0];
+      const catTotals={}; rangeEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
+
+      // 記録開始日数: 目標が選択されている場合は目標開始〜今日
       let days = 1, goalPeriod = "";
       if(goal && goal.start && goal.end){
-        startDate = goal.start;
-        const lastDate = todayStr();
-        days = Math.max(1, Math.round((parseDateStr(lastDate) - parseDateStr(startDate))/86400000) + 1);
+        const s=parseDateStr(goal.start), today=new Date(), until=new Date(Math.min(parseDateStr(goal.end), today));
+        days = Math.max(1, Math.floor((until - s)/86400000) + 1);
         goalPeriod = `<span class="muted" style="font-size:12px;display:block;margin-top:3px;">目標期間：${goal.start}〜${goal.end}</span>`;
       }
+
+      // 目標到達予測
       let tgt = 0, pct = 0, predict = '';
       if (goal) {
         tgt = goal.targetMin;
         pct = Math.min(100, Math.round((totalMin / Math.max(1,tgt))*100));
-        const avg = totalMin/days;
-        if (avg > 0 && totalMin < tgt) {
-          const remain = tgt-totalMin;
-          const estDays = Math.ceil(remain/avg);
-          const d = new Date(); d.setDate(d.getDate()+estDays);
-          predict = `${fmt(estDays)}日後（${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}）`;
-        } else if (totalMin >= tgt && tgt > 0) {
-          predict = '達成済み';
-        }
+        const eta = estimateGoalETA(goal, totalMin);
+        predict = eta.text;
       }
+
       wrap.innerHTML = `
         <div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${fmt(totalMin)} m)</div>
         <div class="summary-progress-bar"><div class="summary-progress-bar-inner" id="mainProgressBar"></div></div>
         <div class="summary-list">
-          <div>記録開始から <span style="font-weight:600">${fmt(days)}</span> 日間 ${goalPeriod}</div>
+          <div>（進捗基準） <span style="font-weight:600">${fmt(days)}</span> 日間${goalPeriod}</div>
           <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
           <div>目標到達予測：${predict||'—'}</div>
         </div>
@@ -507,7 +542,6 @@
       html+='</div>';
       return html;
     }
-
     function renderWeek(){weekView.innerHTML=weekHeatmapHTML(currentWeekStart);weekTitle.textContent=fmtWeekLabel(currentWeekStart);}
 
     // --- カテゴリ選択
@@ -729,7 +763,7 @@
           goalDeleteBtn=document.getElementById('goalDeleteBtn'),
           goalHistory=document.getElementById('goalHistory'),
           activeGoalList=document.getElementById('activeGoalList'),
-          goalCatHint=document.getElementById('goalCatHint'); // ★追加（未定義バグ修正）
+          goalCatHint=document.getElementById('goalCatHint');
 
     function goalStats(g){
       const s=parseDateStr(g.start),e=parseDateStr(g.end);
@@ -789,7 +823,7 @@
         save(KEYS.goals,goals);
         renderGoalHistory();renderActiveGoals();renderSummary();renderWeek();
         toast('削除しました');
-        suppressHover(document.getElementById('tab-goal'), '.goal-hist-del-btn'); // ★hover抑止
+        suppressHover(document.getElementById('tab-goal'), '.goal-hist-del-btn'); // ★他の×の赤化防止
       }
     });
 
