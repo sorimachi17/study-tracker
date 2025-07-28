@@ -476,7 +476,7 @@
         <div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${fmt(totalMin)} m)</div>
         <div class="summary-progress-bar"><div class="summary-progress-bar-inner" id="mainProgressBar"></div></div>
         <div class="summary-list">
-          <div>（進捗基準） <span style="font-weight:600">${fmt(days)}</span> 日間${goalPeriod}</div>
+          <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
           <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
           <div>目標到達予測：${predict||'—'}</div>
         </div>
