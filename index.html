@@ -195,6 +195,7 @@
     /* カテゴリ（シンプルver） */
     .cat-list-row{display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11);}
     .cat-chip{background:var(--chip-muted);color:var(--chip-text);border-radius:12px;padding:5px 14px;font-size:14px;margin-right:4px;height:28px;display:flex;align-items:center;justify-content:center;flex:1 1 auto;white-space:nowrap;}
+    .cat-list-row .cat-chip{cursor:pointer;}
     .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger{font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:auto;}
   </style>
 </head>
@@ -830,8 +831,7 @@
     function renderCats(){
       catList.innerHTML=categories.map((c,i)=>`
         <div class="cat-list-row">
-          <span class="cat-chip">${c}</span>
-          <button class="tab-btn" data-edit="${i}">編集</button>
+          <span class="cat-chip" data-edit="${i}">${c}</span>
           <button class="tab-btn" data-up="${i}">↑</button>
           <button class="tab-btn" data-down="${i}">↓</button>
           <button class="tab-btn danger" data-del="${i}">削除</button>
