@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-  <title>勉強記録アプリ</title>
+  <title>Study Log</title>
   <style>
     :root{
       --bg: #0f1115;
@@ -57,9 +57,8 @@
       display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     }
     h1{margin:0;font-size:18px;flex-grow:1}
-    #menuBtn{display:none;font-size:20px;}
+    #menuBtn{display:block;font-size:16px;margin-left:auto;}
     @media (max-width:640px){
-      #menuBtn{display:block;margin-left:auto;}
       #tabs{display:none;flex-direction:column;width:100%;margin-top:8px;}
       #tabs.open{display:flex;}
     }
@@ -215,7 +214,7 @@
 </head>
 <body>
   <header>
-    <h1>📘 勉強記録アプリ</h1>
+    <h1>📘 Study Log</h1>
     <button id="menuBtn" class="tab-btn" aria-label="メニュー">☰</button>
     <div class="tabs" id="tabs">
       <button class="tab-btn active" data-tab="main">メイン</button>
