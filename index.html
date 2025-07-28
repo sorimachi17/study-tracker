@@ -714,10 +714,7 @@
       entries.push({id:Date.now().toString(36),date:dStr,minutes,category:cat,createdAt:Date.now(),startTime:st,endTime:endt});
       save(KEYS.entries,entries);minEl.value='';estimateTimes();toast();
       renderAll();
-      if(calendarViewSel.value==='week'){
-        renderWeek();
-      }
-      setCalendarView(calendarViewSel.value);
+      if(activeDayDetail) renderDayDetails(activeDayDetail);
     });
 
     // --- カレンダー表示 + 月選択モーダル
@@ -792,8 +789,8 @@
       renderGoal();
       renderActiveGoals();
       renderGoalHistory();
-      if(activeDayDetail) renderDayDetails(activeDayDetail);
       renderMonth();
+      if(activeDayDetail) renderDayDetails(activeDayDetail);
       setCalendarView(calendarViewSel.value);
       const btn = document.elementFromPoint(clientX, clientY);
       if(row) row.remove();
