@@ -384,8 +384,14 @@
     const fmtWeekLabel = start => { const end=new Date(start); end.setDate(start.getDate()+6); return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}`; };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
-    const activeGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.start)<=today&&parseDateStr(g.end)>=today);};
-    const pastGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.end)<today);};
+    const activeGoals=()=>{
+      const today=new Date();today.setHours(0,0,0,0);
+      return goals.filter(g=>parseDateStr(g.start)<=today && parseDateStr(g.end)>=today);
+    };
+    const pastGoals=()=>{
+      const today=new Date();today.setHours(0,0,0,0);
+      return goals.filter(g=>parseDateStr(g.end)<today);
+    };
     const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});    
 
     // ----- メニュー（重ねるオーバーレイ）
