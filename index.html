@@ -874,6 +874,8 @@
       if(!start||!end||!hours)return;
       goals.push({start,end,targetMin:hours*60,category:cat});
       save(KEYS.goals,goals);toast('保存');
+      const acts=activeGoals();
+      if(acts.length) summaryGoalIndex=acts.length-1;
       renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
     });
     goalDeleteBtn.addEventListener('click',()=>{
