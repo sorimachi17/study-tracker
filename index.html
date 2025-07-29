@@ -23,8 +23,174 @@
       --lvl4:#31a65a;
       --goalhist-bg: #16191e;
     }
-    /* ...（ここまでのCSSは省略してOK）... */
-
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f8fb;
+        --card: #ffffff;
+        --text:#111;
+        --muted:#667085;
+        --accent:#2ea043;
+        --accent-2:#1f7a32;
+        --danger:#f25f5c;
+        --chip: #e6f4ea;
+        --chip-muted: #c2c7cf;
+        --chip-text: #1a2a15;
+        --lvl0:#ebedf0;
+        --lvl1:#c6e48b;
+        --lvl2:#7bc96f;
+        --lvl3:#239a3b;
+        --lvl4:#196127;
+        --goalhist-bg: #f4f5f8;
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+      line-height:1.5;
+    }
+    header{
+      position:sticky;top:0;z-index:5;background:var(--bg);
+      padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    h1{margin:0;font-size:18px;flex-grow:1}
+    #menuBtn{display:block;font-size:16px;margin-left:auto;}
+    @media (max-width:640px){
+      #tabs{display:none;flex-direction:column;width:100%;margin-top:8px;}
+      #tabs.open{display:flex;}
+    }
+    .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;flex-wrap:wrap;}
+    .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:7px 13px;border-radius:999px;font-size:13px;width:auto;}
+    .tab-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
+    main{padding:12px;max-width:980px;margin:0 auto}
+    section{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:12px;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media (max-width:640px){.row{grid-template-columns:1fr}}
+    label{font-size:12px;color:var(--muted)}
+    input,select,button,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0e1016;color:var(--text);font-size:15px;}
+    @media (prefers-color-scheme: light){input,select,button,textarea{background:#fff;color:#111;border-color:#e5e7eb}}
+    .tabs .tab-btn{width:auto;}
+    button.primary{background:var(--accent);color:white;border:none;font-weight:600}
+    button.secondary{background:transparent}
+    .inline{display:flex;gap:8px;align-items:center}
+    .chip{
+      display:inline-block;min-width:40px;text-align:center;padding:4px 10px;
+      border-radius:16px;background:var(--chip-muted);color:var(--chip-text);
+      font-size:13px;font-weight:500;letter-spacing:0.2px;
+    }
+    .chip.main{background:var(--chip);color:var(--chip-text);}
+    .chip.accent{background:var(--accent);color:#fff;}
+    .chip.muted{background:var(--chip-muted);color:var(--chip-text);}
+    .muted{color:var(--muted)}
+    .right{margin-left:auto}
+    .summary-card {
+      background: var(--card);
+      border: 1.5px solid var(--accent);
+      border-radius: 14px;
+      margin-bottom: 18px;
+      padding: 18px 14px 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+      font-size: 15px;
+    }
+    .summary-kpi { font-size: 26px; font-weight: bold; }
+    .summary-list { display: grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+    @media (max-width:600px) {.summary-list { grid-template-columns:1fr; } }
+    .summary-progress-bar { width:100%;height:11px;border-radius:7px;background:var(--lvl0);margin:10px 0 4px 0;overflow:hidden; }
+    .summary-progress-bar-inner { height:100%;border-radius:7px;background:var(--accent);transition:.25s;width:0; }
+    .progress{width:100%;height:10px;border-radius:8px;background:var(--lvl0);overflow:hidden;}
+    .progress-inner{height:100%;background:var(--accent);border-radius:8px;transition:.2s;width:0;}
+    .calendar-head{display:flex;align-items:center;gap:2px;margin-bottom:8px;justify-content:center;}
+    .calendar-nav-btn{
+      width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+      border-radius:50%;border:none;background:var(--lvl0);
+      font-size:19px;cursor:pointer;transition:.15s;margin:0 3px;
+    }
+    .calendar-nav-btn:active{background:var(--lvl1);}
+    .calendar-nav-select{
+      height:32px;border-radius:6px;background:var(--lvl0);color:var(--text);
+      border:none;padding:0 4px;font-size:14px;margin:0 3px;width:72px;
+    }
+    .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s;}
+    .calendar-title-btn:hover{background:var(--lvl1);}
+    .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7,1fr);}
+    .dow{font-size:12px;color:var(--muted);text-align:center}
+    .day{aspect-ratio:1/1;border-radius:6px;padding:4px;position:relative;display:flex;flex-direction:column;justify-content:space-between;background:var(--lvl0);cursor:pointer;}
+    .day .num{font-size:12px;opacity:.9}
+    .day .mins{font-size:11px;text-align:right;opacity:.95}
+    .lvl0{background:var(--lvl0)} .lvl1{background:var(--lvl1)} .lvl2{background:var(--lvl2)} .lvl3{background:var(--lvl3)} .lvl4{background:var(--lvl4)}
+    .day.today{outline:2px solid var(--accent);outline-offset:0}
+    .year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+    .mini-month{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px;cursor:pointer;}
+    .mini-month-name{text-align:center;font-size:12px;color:var(--muted);margin-bottom:2px;}
+    .mini-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+    .mini-day{aspect-ratio:1/1;font-size:9px;border-radius:2px;display:flex;align-items:center;justify-content:center;}
+    .mini-day.today{outline:1px solid var(--accent);}
+    .day-detail-wrap{background:var(--card);border-radius:11px;margin-bottom:10px;box-shadow:0 2px 10px rgba(30,40,45,0.06);border:1.5px solid var(--lvl0);padding:18px 15px 8px 15px;max-width:440px;}
+    .day-detail-title{font-size:19px;font-weight:600;margin-bottom:2px;letter-spacing:0.5px;}
+    .day-detail-total{font-size:14px;color:var(--muted);margin-bottom:10px;}
+    .day-detail-list .rec-row{
+      display:flex;align-items:center;gap:8px;background:var(--lvl0);
+      border-radius:8px;padding:6px 8px;margin-bottom:6px;border:1px solid rgba(255,255,255,.07);
+    }
+    .day-detail-list .rec-row .chip{
+      min-width:56px;max-width:110px;white-space:nowrap;padding:3px 11px;font-size:13px;
+      margin-right:4px;border-radius:12px;background:var(--chip-muted);color:var(--chip-text);
+      text-align:center;height:28px;display:flex;align-items:center;justify-content:center;
+    }
+    .day-detail-list .rec-row .del-btn{
+      padding:0 11px;min-width:0;font-size:15px;border-radius:7px;background:var(--muted);
+      color:var(--bg);border:none;margin-left:auto;transition:.2s;height:28px;line-height:1;display:flex;align-items:center;justify-content:center;width:38px;
+    }
+      .day-detail-list .rec-row .del-btn:hover{background:var(--muted);}
+    .day-detail-list .rec-row .del-btn.no-hover:hover{background:var(--muted);}
+    .goal-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px;margin-bottom:12px;}
+    .goal-list-card{margin-top:0;}
+    .goal-hist-item{
+      background:var(--goalhist-bg);border-radius:12px;margin-bottom:12px;padding:16px 15px 12px 15px;
+      box-shadow:0 2px 10px rgba(30,40,45,0.07);border:1px solid rgba(100,150,110,0.10);max-width:440px;display:flex;flex-direction:column;gap:6px;
+    }
+    .goal-hist-period{font-size:15px;font-weight:600;margin-bottom:0;letter-spacing:0.2px;}
+    .goal-hist-kpis{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin:2px 0 0 2px;}
+    .goal-hist-kpis .gh-kpi{color:var(--muted);}
+    .goal-hist-del-btn{
+      align-self:flex-end;padding:2px 11px;border-radius:8px;background:var(--muted);
+      color:var(--bg);border:none;font-size:13px;margin-top:4px;transition:.2s;
+    }
+      .goal-hist-del-btn:hover{background:var(--muted);color:var(--bg);}
+    .goal-hist-del-btn.no-hover:hover{background:var(--muted);color:var(--bg);}
+    .goal-btns{display:flex;gap:14px;justify-content:space-between;margin-top:14px;margin-bottom:18px;}
+    .goal-btns .primary,.goal-btns .danger{width:48%;min-width:90px;font-size:16px;border-radius:13px;padding:13px 0;}
+    .week-heatmap{display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
+    .week-heatmap .cell{height:12px;border-radius:2px}
+    .week-heatmap .week-date{cursor:pointer}
+    .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
+    .form-row-flex {display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;flex-wrap:wrap;}
+    @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
+    .input-block {flex:1;}
+    .time-input-row {display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px;}
+    .time-input-row label {font-size:12px;color:var(--muted);}
+    .time-fields {display:flex;gap:8px;flex:1 1 0;min-width:0;}
+    .time-fields input[type="time"]{flex:1 1 0;min-width:100px;max-width:160px;text-align:center;padding:10px;font-size:15px;}
+    .entry-submit-row {display:flex;justify-content:center;margin-top:6px;margin-bottom:0;}
+    .entry-submit-row button {max-width:220px;width:80%;font-size:16px;padding:15px 0;border-radius:12px;}
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
+    .toast.show{opacity:1}
+    .cat-list-row{display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11);}
+    .cat-chip{background:var(--chip-muted);color:var(--chip-text);border-radius:12px;padding:5px 14px;font-size:14px;margin-right:4px;height:28px;display:flex;align-items:center;justify-content:center;flex:1 1 auto;white-space:nowrap;}
+    .cat-list-row .cat-chip{cursor:pointer;}
+    .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger{font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:auto;}
+    .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
+    .calendar-card,.records-card{flex:1;min-width:260px;}
+    .records-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(30,40,45,0.07);}
+    select{height:48px;}
+    .minutes-block{flex:0 0 140px;}
+    .minutes-block input{max-width:100%;}
+    @media (max-width:600px){.minutes-block{flex-basis:auto;}}
+    .date-block{flex:1;min-width:140px;}
+    @media (max-width:600px){.date-block{min-width:100px;}}
     /* --- 日付inputだけ幅・padding・高さを強制上書き --- */
     input[type="date"] {
       min-width: 140px;
@@ -51,24 +217,55 @@
         padding-right: 12px !important;
       }
     }
-    .date-block {
-      min-width: 140px;
-    }
-    @media (max-width:600px) {
-      .date-block { min-width: 100px; }
-    }
-    /* --- 以下は元のCSSでOK --- */
   </style>
 </head>
 <body>
   <header>
     <h1>📘 Study Log</h1>
-    <!-- ...省略... -->
+    <button id="menuBtn" class="tab-btn" aria-label="メニュー">☰</button>
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="main">メイン</button>
+      <button class="tab-btn" data-tab="goal">目標</button>
+      <button class="tab-btn" data-tab="cats">カテゴリ</button>
+      <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">📤</button>
+      <button class="tab-btn" id="importBtn" title="JSONを読み込み">📥</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
   </header>
   <main>
     <!-- メイン画面 -->
     <section id="tab-main">
+      <div id="summaryCard" class="summary-card">
+        <div id="summaryGoalTabs" class="tabs" style="margin-bottom:6px;"></div>
+        <div id="summaryContent"></div>
+      </div>
       <div class="flex-split">
+        <!-- カレンダー -->
+        <div class="calendar-card">
+          <div class="calendar-head" id="calendarNav">
+            <button id="prevMonth" class="calendar-nav-btn">&lt;</button>
+            <div id="monthTitle" class="calendar-title-btn"></div>
+            <button id="nextMonth" class="calendar-nav-btn">&gt;</button>
+            <button id="prevYear" class="calendar-nav-btn" style="display:none">&lt;</button>
+            <div id="yearTitle" class="calendar-title-btn" style="display:none"></div>
+            <button id="nextYear" class="calendar-nav-btn" style="display:none">&gt;</button>
+            <button id="prevWeek" class="calendar-nav-btn" style="display:none">&lt;</button>
+            <div id="weekTitle" class="calendar-title-btn" style="display:none"></div>
+            <button id="nextWeek" class="calendar-nav-btn" style="display:none">&gt;</button>
+            <select id="calendarView" class="calendar-nav-select">
+              <option value="year">年</option>
+              <option value="month" selected>月</option>
+              <option value="week">週</option>
+            </select>
+          </div>
+          <div class="calendar-grid" id="dowRow"></div>
+          <div class="calendar-grid" id="monthGrid"></div>
+          <div id="dayDetails" style="margin-top:10px"></div>
+          <div id="yearView" style="display:none">
+            <div id="yearGrid" class="year-grid"></div>
+          </div>
+          <div id="weekView" style="display:none"></div>
+        </div>
         <!-- 記録入力 -->
         <div class="records-card">
           <form id="entryForm">
@@ -86,13 +283,89 @@
                 <input type="text" id="minutes" placeholder="例: 45" required autocomplete="off">
               </div>
             </div>
-            <!-- ...以下省略OK... -->
+            <div class="time-input-row">
+              <label>開始・終了時刻</label>
+              <div class="time-fields">
+                <input type="time" id="startTime" step="60">
+                <span style="line-height:1.8;">～</span>
+                <input type="time" id="endTime" step="60">
+              </div>
+            </div>
+            <div class="entry-submit-row">
+              <button type="submit" class="primary">記録する</button>
+            </div>
           </form>
         </div>
       </div>
     </section>
-    <!-- ...以下省略OK... -->
+    <!-- 目標 -->
+    <div id="tab-goal" style="display:none">
+      <section class="goal-card">
+        <form id="goalForm">
+          <div class="row">
+            <div>
+              <label>開始日</label>
+              <input type="date" id="goalStart" required>
+            </div>
+            <div>
+              <label>終了日</label>
+              <input type="date" id="goalEnd" required>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label>目標時間 (h)</label>
+              <input type="number" id="goalHours" min="1" placeholder="例: 100" required>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label>カテゴリ</label>
+              <select id="goalCategory"></select>
+            </div>
+          </div>
+          <div class="goal-btns">
+            <button class="primary" type="submit">保存</button>
+            <button class="danger" type="button" id="goalDeleteBtn">削除</button>
+          </div>
+          </form>
+          <div id="activeGoalList" class="goal-list-card" style="margin-top:10px"></div>
+        </section>
+      <section class="goal-card">
+        <div class="goal-list-card" id="goalHistory"></div>
+      </section>
+    </div>
+    <!-- カテゴリ管理 -->
+    <section id="tab-cats" style="display:none">
+      <div class="row">
+        <div><label>新規カテゴリ名</label><input type="text" id="newCat" placeholder="例: IELTSリーディング"></div>
+        <div style="align-self:end"><button id="addCat" class="primary" type="button">追加</button></div>
+      </div>
+      <div style="margin-top:8px" id="catList" class="list"></div>
+      <div class="inline" style="margin-top:12px; gap:8px">
+        <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
+      </div>
+    </section>
   </main>
-  <!-- ...（JS部分は変更不要）... -->
+  <!-- トースト -->
+  <div id="toast" class="toast"></div>
+  <!-- 月選択モーダル -->
+  <div id="monthModal" class="modal-bg" style="display:none">
+    <div class="modal-content">
+      <label>年月を選択</label>
+      <div style="margin-top:8px;">
+        <select id="selectYear"></select>
+        <select id="selectMonth"></select>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary" id="closeMonthModal">キャンセル</button>
+        <button class="primary" id="gotoMonthBtn">移動</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // （JS部分は元コードまま、貼り付け可：ここは省略リクエストが無ければ長いので割愛）
+    // 必要なら直近で貼り付けます
+  </script>
 </body>
 </html>
