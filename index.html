@@ -210,16 +210,16 @@
 <body>
   <header>
     <h1>📘 Study Log</h1>
-    <button id="menuBtn" aria-label="メニュー">☰</button>
+    <button id="menuBtn" type="button" aria-label="メニュー">☰</button>
 
     <!-- PC 表示用タブ（data-tab は同一ページ、a[href] は外部遷移） -->
     <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="main">メイン</button>
-      <button class="tab-btn" data-tab="goal">目標</button>
-      <button class="tab-btn" data-tab="cats">カテゴリ</button>
+      <button class="tab-btn active" type="button" data-tab="main">メイン</button>
+      <button class="tab-btn" type="button" data-tab="goal">目標</button>
+      <button class="tab-btn" type="button" data-tab="cats">カテゴリ</button>
       <!-- 外部ページ例：<a class="tab-btn" href="/another.html">別ページ</a> -->
-      <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">エクスポート</button>
-      <button class="tab-btn" id="importBtn" title="JSONを読み込み">インポート</button>
+      <button class="tab-btn right" type="button" id="exportBtn" title="JSONで書き出し">エクスポート</button>
+      <button class="tab-btn" type="button" id="importBtn" title="JSONを読み込み">インポート</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
     </div>
   </header>
@@ -227,12 +227,12 @@
   <!-- モバイル用オーバーレイメニュー -->
   <div id="menuBackdrop"></div>
   <nav id="menuPanel" aria-hidden="true">
-    <button class="m-item" data-tab="main">メイン</button>
-    <button class="m-item" data-tab="goal">目標</button>
-    <button class="m-item" data-tab="cats">カテゴリ</button>
+    <button class="m-item" type="button" data-tab="main">メイン</button>
+    <button class="m-item" type="button" data-tab="goal">目標</button>
+    <button class="m-item" type="button" data-tab="cats">カテゴリ</button>
     <!-- 外部ページ例：<a class="m-item" href="/goals.html">別ページ（例）</a> -->
-    <button class="m-item" id="mExport">エクスポート</button>
-    <button class="m-item" id="mImport">インポート</button>
+    <button class="m-item" type="button" id="mExport">エクスポート</button>
+    <button class="m-item" type="button" id="mImport">インポート</button>
   </nav>
 
   <main>
