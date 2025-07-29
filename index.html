@@ -52,51 +52,83 @@
       line-height:1.5;
     }
     header{
-      position:sticky;top:0;z-index:5;background:var(--bg);
+      position:sticky;top:0;z-index:20;background:var(--bg);
       padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);
-      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+      display:flex;align-items:center;gap:8px;
+      min-height:56px;
     }
     h1{margin:0;font-size:18px;flex-grow:1}
-    #menuBtn{display:block;font-size:16px;margin-left:auto;}
-    @media (max-width:640px){
-      #tabs{display:none;flex-direction:column;width:100%;margin-top:8px;}
-      #tabs.open{display:flex;}
+
+    /* ▼ ハンバーガーを角丸の四角に */
+    #menuBtn{
+      width:40px;height:40px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,.12);
+      background:var(--card);color:var(--text);font-size:18px;
+      cursor:pointer;
     }
+    @media (prefers-color-scheme: light){
+      #menuBtn{border-color:#e5e7eb;background:#fff;color:#111}
+    }
+
+    /* デフォルトのタブ（PC等） */
     .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;flex-wrap:wrap;}
     .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:7px 13px;border-radius:999px;font-size:13px;width:auto;}
     .tab-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
+
+    /* ▼ モバイルでは「押し下げない」固定オーバーレイ化 */
+    @media (max-width:640px){
+      .tabs{display:none}             /* 通常時は非表示 */
+      #tabs.open{
+        display:flex;flex-direction:column;gap:10px;
+        position:fixed;left:8px;right:8px;top:60px;
+        background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:14px;
+        padding:12px;box-shadow:0 12px 34px rgba(0,0,0,.35);z-index:30;
+      }
+      #tabs.open .tab-btn{
+        width:100%;height:44px;border-radius:12px;font-size:14px;
+        display:flex;align-items:center;justify-content:center;
+      }
+      #tabs.open .tab-btn.right{margin-left:0}
+      #menuBackdrop{
+        position:fixed;inset:0;background:rgba(0,0,0,.35);
+        opacity:0;pointer-events:none;transition:.2s;z-index:25;
+      }
+      #menuBackdrop.show{opacity:1;pointer-events:auto;}
+    }
+
     main{padding:12px;max-width:980px;margin:0 auto}
     section{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:12px;}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     @media (max-width:640px){.row{grid-template-columns:1fr}}
-    /* ← ラベルをブロック化して左端をそろえる */
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 
-    /* 入力系の既定スタイル。フォント16pxでiOSズーム防止 */
+    /* 入力系（高さを統一） */
     input,select,button,textarea{
       width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-      background:#0e1016;color:var(--text);font-size:16px; /* ← 16px */
-      display:block;
+      background:#0e1016;color:var(--text);font-size:16px;display:block;
     }
     @media (prefers-color-scheme: light){
       input,select,button,textarea{background:#fff;color:#111;border-color:#e5e7eb}
     }
-
-    /* ▼ スマホでの date の右ズレ対策（統一リセット） */
+    /* date の右ズレ対策 */
     input[type="date"]{
-      -webkit-appearance:none;
-      appearance:none;
-      position:relative;
-      padding-right:44px; /* 右側アイコン分の余白 */
-      margin:0;
-      background-clip:padding-box;
+      -webkit-appearance:none;appearance:none;position:relative;
+      padding-right:44px;margin:0;background-clip:padding-box;height:48px;
     }
-    /* iOSの内部値領域の寄せをリセット */
     input[type="date"]::-webkit-date-and-time-value{ text-align:left; }
-    /* 右側カレンダーアイコン位置を明示 */
     input[type="date"]::-webkit-calendar-picker-indicator{
       position:absolute; right:12px; top:50%; transform:translateY(-50%);
     }
+
+    /* ▼ 時刻入力の高さ・中央寄せを厳密に */
+    .time-fields input[type="time"]{
+      -webkit-appearance:none;appearance:none;
+      height:48px;min-width:120px;max-width:160px;flex:1 1 0;
+      text-align:center;padding:0 10px;font-size:16px;
+    }
+    input[type="time"]::-webkit-datetime-edit{ padding:0; }
+    input[type="time"]::-webkit-date-and-time-value{ text-align:center; }
 
     .tabs .tab-btn{width:auto;}
     button.primary{background:var(--accent);color:white;border:none;font-weight:600}
@@ -180,7 +212,7 @@
       padding:0 11px;min-width:0;font-size:15px;border-radius:7px;background:var(--muted);
       color:var(--bg);border:none;margin-left:auto;transition:.2s;height:28px;line-height:1;display:flex;align-items:center;justify-content:center;width:38px;
     }
-    .day-detail-list .rec-row .del-btn.no-hover:hover{background:var(--muted);} /* ← hover抑止 */
+    .day-detail-list .rec-row .del-btn.no-hover:hover{background:var(--muted);}
 
     /* 目標カード */
     .goal-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px;margin-bottom:12px;}
@@ -196,7 +228,7 @@
       align-self:flex-end;padding:2px 11px;border-radius:8px;background:var(--muted);
       color:var(--bg);border:none;font-size:13px;margin-top:4px;transition:.2s;
     }
-    .goal-hist-del-btn.no-hover:hover{background:var(--muted);color:var(--bg);} /* ← hover抑止 */
+    .goal-hist-del-btn.no-hover:hover{background:var(--muted);color:var(--bg);}
 
     /* 目標保存・削除ボタン */
     .goal-btns{display:flex;gap:14px;justify-content:space-between;margin-top:14px;margin-bottom:18px;}
@@ -208,20 +240,15 @@
     .week-heatmap .week-date{cursor:pointer}
     .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
 
-    /* フォームまわり（時刻入力→時間選択 & 余白調整） */
+    /* フォームまわり */
     .form-row-flex {display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;flex-wrap:wrap;}
     @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
     .input-block {flex:1;}
     .time-input-row {display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px;}
     .time-input-row label {font-size:12px;color:var(--muted);}
     .time-fields {display:flex;gap:8px;flex:1 1 0;min-width:0;}
-    .time-fields input[type="time"]{flex:1 1 0;min-width:100px;max-width:160px;text-align:center;padding:10px;font-size:16px;}
     .entry-submit-row {display:flex;justify-content:center;margin-top:6px;margin-bottom:0;}
     .entry-submit-row button {max-width:220px;width:80%;font-size:16px;padding:15px 0;border-radius:12px;}
-
-    /* トースト */
-    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s}
-    .toast.show{opacity:1}
 
     /* カテゴリ（シンプルver） */
     .cat-list-row{display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11);}
@@ -229,31 +256,45 @@
     .cat-list-row .cat-chip{cursor:pointer;}
     .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger{font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:auto;}
 
-    /* メイン画面レイアウト調整 */
+    /* メイン画面レイアウト */
     .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
     .calendar-card,.records-card{flex:1;min-width:260px;}
-    .records-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(30,40,45,0.07);}
+    .records-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(30,40,45,0.07);min-height:260px;}
     select{height:48px;}
     .minutes-block{flex:0 0 140px;}
     .minutes-block input{max-width:100%;}
     @media (max-width:600px){.minutes-block{flex-basis:auto;}}
     .date-block{flex:1;min-width:160px;}
     @media (max-width:600px){.date-block{flex-basis:auto;}}
+
+    /* 入力部の高さを統一（date/text/select）*/
+    .input-block input[type="date"],
+    .input-block input[type="text"],
+    .input-block select{height:48px;}
+    
+    /* トースト */
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:40}
+    .toast.show{opacity:1}
   </style>
 </head>
 <body>
   <header>
     <h1>📘 Study Log</h1>
-    <button id="menuBtn" class="tab-btn" aria-label="メニュー">☰</button>
+    <button id="menuBtn" aria-label="メニュー">☰</button>
+    <!-- ナビ（PCはそのまま、モバイルはオーバーレイに変形） -->
     <div class="tabs" id="tabs">
       <button class="tab-btn active" data-tab="main">メイン</button>
       <button class="tab-btn" data-tab="goal">目標</button>
       <button class="tab-btn" data-tab="cats">カテゴリ</button>
-      <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">📤</button>
-      <button class="tab-btn" id="importBtn" title="JSONを読み込み">📥</button>
+      <button class="tab-btn" id="exportBtn" title="JSONで書き出し">エクスポート</button>
+      <button class="tab-btn" id="importBtn" title="JSONを読み込み">インポート</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
     </div>
   </header>
+
+  <!-- モバイル用バックドロップ -->
+  <div id="menuBackdrop"></div>
+
   <main>
     <!-- メイン画面 -->
     <section id="tab-main">
@@ -395,11 +436,11 @@
     // --- 基本ユーティリティ
     const KEYS = {entries:'studyEntries_v7',cats:'studyCategories_v7',goals:'studyGoals_v7'};
     const pad = n => String(n).padStart(2,'0');
-    const fmtTime = d => ${pad(d.getHours())}:${pad(d.getMinutes())};
+    const fmtTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     const todayStr = () => { const d=new Date(); return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-'); };
-    const fmtDateLabel = d => ${d.getFullYear()}年${d.getMonth()+1}月;
+    const fmtDateLabel = d => `${d.getFullYear()}年${d.getMonth()+1}月`;
     const parseDateStr = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d,0,0,0,0); };
-    const dateToStr = d => ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())};
+    const dateToStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const toast = msg => { const t=document.getElementById('toast'); if(!t) return; t.textContent=msg||'保存しました'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); };
     const load = (k,fallback)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v??fallback }catch(e){ return fallback } };
     const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -408,14 +449,13 @@
         goals=load(KEYS.goals,[]);
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
     const startOfWeek = d => { const t=new Date(d); const diff=(t.getDay()+6)%7; t.setDate(t.getDate()-diff); t.setHours(0,0,0,0); return t; };
-    const fmtWeekLabel = start => { const end=new Date(start); end.setDate(start.getDate()+6); return ${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}; };
+    const fmtWeekLabel = start => { const end=new Date(start); end.setDate(start.getDate()+6); return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}`; };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
     const activeGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.start)<=today&&parseDateStr(g.end)>=today);};
     const pastGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.end)<today);};
-    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
+    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});    
 
-    // ★ hover抑止ヘルパ（削除直後に他の×が赤くならないように）
     function suppressHover(container, selector){
       const btns = container.querySelectorAll(selector);
       if(!btns.length) return;
@@ -425,7 +465,6 @@
       setTimeout(clear, 400);
     }
 
-    // --- 目標到達予測（見直し版）
     function estimateGoalETA(goal, achievedMin){
       const target = goal?.targetMin || 0;
       if(!goal || !target) return { text:'—' };
@@ -433,18 +472,18 @@
       const s = parseDateStr(goal.start);
       const e = parseDateStr(goal.end);
       const today = new Date();
-      const until = new Date(Math.min(e.getTime(), today.getTime())); // 観測期間の終点
+      const until = new Date(Math.min(e.getTime(), today.getTime()));
       const elapsedDays = Math.max(1, Math.floor((until - s)/86400000) + 1);
       const ratio = achievedMin / target;
       if(ratio <= 0) return { text:'—' };
       const estDays = Math.ceil(elapsedDays * (1 - ratio) / ratio);
       const eta = new Date(today);
       eta.setDate(today.getDate() + estDays);
-      const text = ${fmt(estDays)}日後（${eta.getFullYear()}/${pad(eta.getMonth()+1)}/${pad(eta.getDate())}）;
+      const text = `${fmt(estDays)}日後（${eta.getFullYear()}/${pad(eta.getMonth()+1)}/${pad(eta.getDate())}）`;
       return { text, eta };
     }
 
-    // --- タブ制御
+    // --- タブ制御（オーバーレイ対応）
     const tabBtns=[...document.querySelectorAll('.tab-btn[data-tab]')];
     const sections={main:document.getElementById('tab-main'),goal:document.getElementById('tab-goal'),cats:document.getElementById('tab-cats')};
     function setTab(name){
@@ -455,9 +494,20 @@
       if(name==='cats') renderCats();
     }
     const tabsEl=document.getElementById('tabs');
-    document.getElementById('menuBtn').addEventListener('click',()=>{ tabsEl.classList.toggle('open'); });
+    const backdrop=document.getElementById('menuBackdrop');
+
+    const closeMenu=()=>{ tabsEl.classList.remove('open'); backdrop.classList.remove('show'); };
+    document.getElementById('menuBtn').addEventListener('click',()=>{
+      const willOpen=!tabsEl.classList.contains('open');
+      tabsEl.classList.toggle('open',willOpen);
+      backdrop.classList.toggle('show',willOpen);
+    });
+    backdrop.addEventListener('click',closeMenu);
+
     tabsEl.addEventListener('click',e=>{
-      const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;setTab(t.dataset.tab);tabsEl.classList.remove('open');
+      const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;
+      setTab(t.dataset.tab);
+      closeMenu();
     });
     document.getElementById('summaryGoalTabs').addEventListener('click',e=>{
       const i=e.target?.dataset?.selgoal;
@@ -471,10 +521,9 @@
       if(!entries.length){wrap.innerHTML='<div class="muted">まだ記録がありません。</div>';tabWrap.innerHTML='';return;}
       const goalsAct=activeGoals().slice();
       if(summaryGoalIndex>=goalsAct.length) summaryGoalIndex=0;
-      tabWrap.innerHTML=goalsAct.map((g,i)=><button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>).join('');
+      tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
       const goal=goalsAct[summaryGoalIndex];
 
-      // 合計（目標が選ばれていれば期間＆カテゴリで絞る）
       let totalMin = entries.reduce((a,b)=>a+b.minutes,0);
       if(goal && goal.start && goal.end){
         const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
@@ -487,7 +536,6 @@
       }
       const totalH = fmt(totalMin/60,1);
 
-      // カテゴリ内訳（目標期間で制限）
       const rangeEntries = entries.filter(x=>{
         if(goal && goal.start && goal.end){
           const d=parseDateStr(x.date);
@@ -497,15 +545,13 @@
       });
       const catTotals={}; rangeEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
 
-      // 記録開始日数: 目標が選択されている場合は目標開始〜今日
       let days = 1, goalPeriod = "";
       if(goal && goal.start && goal.end){
         const s=parseDateStr(goal.start), today=new Date(), until=new Date(Math.min(parseDateStr(goal.end), today));
         days = Math.max(1, Math.floor((until - s)/86400000) + 1);
-        goalPeriod = <span class="muted" style="font-size:12px;display:block;margin-top:3px;">目標期間：${goal.start}〜${goal.end}</span>;
+        goalPeriod = `<span class="muted" style="font-size:12px;display:block;margin-top:3px;">目標期間：${goal.start}〜${goal.end}</span>`;
       }
 
-      // 目標到達予測
       let tgt = 0, pct = 0, predict = '';
       if (goal) {
         tgt = goal.targetMin;
@@ -515,7 +561,7 @@
       }
 
       wrap.innerHTML =
-        <div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${fmt(totalMin)} m)</div>
+        `<div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${fmt(totalMin)} m)</div>
          <div class="summary-progress-bar"><div class="summary-progress-bar-inner" id="mainProgressBar"></div></div>
          <div class="summary-list">
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
@@ -523,8 +569,8 @@
            <div>目標到達予測：${predict||'—'}</div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
-           ${Object.entries(catTotals).map(([c,v])=><div>${c}: <b>${fmt(v/60,1)}</b>h</div>).join('')}
-         </div>;
+           ${Object.entries(catTotals).map(([c,v])=>`<div>${c}: <b>${fmt(v/60,1)}</b>h</div>`).join('')}
+         </div>`;
       document.getElementById('mainProgressBar').style.width = (goal?Math.min(100, Math.round((totalMin / Math.max(1,goal.targetMin))*100)):0) + '%';
     }
 
@@ -553,16 +599,16 @@
       let html='<div class="week-heatmap"><div></div>';
       for(let i=0;i<7;i++){
         const d=new Date(start);d.setDate(start.getDate()+i);const ds=dateToStr(d);
-        html+=<div class="week-date" data-date="${ds}" style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>;
+        html+=`<div class="week-date" data-date="${ds}" style="text-align:center;font-size:11px">${pad(d.getMonth()+1)}/${pad(d.getDate())}</div>`;
       }
       for(let g=0;g<groupCount;g++){
-        const label=${pad(g*groups)}-${pad(g*groups+groups)};
-        html+=<div class="hour-label">${label}</div>;
+        const label=`${pad(g*groups)}-${pad(g*groups+groups)}`;
+        html+=`<div class="hour-label">${label}</div>`;
         for(let d=0;d<7;d++){
           const day=new Date(start);day.setDate(start.getDate()+d);const ds=dateToStr(day);
           const v=heatAgg[d][g];
           const lvl=v===0?0:Math.min(4,Math.ceil((v/(max||1))*4));
-          html+=<div class="cell lvl${lvl}" data-date="${ds}"></div>;
+          html+=`<div class="cell lvl${lvl}" data-date="${ds}"></div>`;
         }
       }
       html+='</div>';
@@ -613,7 +659,6 @@
     startEl.addEventListener('input',updateEndFromStart);
     endEl.addEventListener('input',updateStartFromEnd);
 
-    // 追加
     form.addEventListener('submit',e=>{
       e.preventDefault();
       const minutes=Number(minEl.value),cat=catSel.value,st=startEl.value,endt=endEl.value;
@@ -650,15 +695,15 @@
     let currentYear=currentYM.y;
 
     function renderMonth(){
-      dowRow.innerHTML=DOW.map(d=><div class="dow">${d}</div>).join('');
+      dowRow.innerHTML=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
       const y=currentYM.y,m=currentYM.m;monthTitle.textContent=fmtDateLabel(new Date(y,m,1));
       const lastDate=new Date(y,m+1,0).getDate();const totals={};let monthMax=0;
-      for(let d=1;d<=lastDate;d++){const key=${y}-${pad(m+1)}-${pad(d)};const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);totals[key]=sum;monthMax=Math.max(monthMax,sum);}
+      for(let d=1;d<=lastDate;d++){const key=`${y}-${pad(m+1)}-${pad(d)}`;const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);totals[key]=sum;monthMax=Math.max(monthMax,sum);}
       const firstDow=(new Date(y,m,1).getDay()+6)%7;const blanks=Array.from({length:firstDow},()=>'<div></div>').join('');
       monthGrid.innerHTML=blanks+Array.from({length:lastDate},(_,i)=>{
-        const d=i+1,key=${y}-${pad(m+1)}-${pad(d)},sum=totals[key]||0;
+        const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`,sum=totals[key]||0;
         const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));const isToday=key===todayStr();
-        return <div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?fmt(sum)+'m':''}</div></div>;
+        return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?fmt(sum)+'m':''}</div></div>`;
       }).join('');
       dayDetails.innerHTML='';
       if(activeDayDetail) renderDayDetails(activeDayDetail);
@@ -668,29 +713,27 @@
       activeDayDetail=d;
       const list=entries.filter(x=>x.date===d).sort((a,b)=>b.createdAt-a.createdAt),total=list.reduce((a,b)=>a+b.minutes,0);
       dayDetails.innerHTML=
-        <div class="day-detail-wrap">
+        `<div class="day-detail-wrap">
           <div class="day-detail-title">${d}</div>
           <div class="day-detail-total">合計 <strong>${fmt(total/60,1)}</strong>h (${fmt(total)}m)</div>
           <div class="day-detail-list">
             ${list.length?list.map(e=>
-              <div class="rec-row">
+              `<div class="rec-row">
                 <span class="chip muted">${e.category}</span>
-                <span style="font-size:13px;color:var(--muted)">${fmt(e.minutes)}m${(e.startTime&&e.endTime)?（${e.startTime}～${e.endTime}）:''}</span>
+                <span style="font-size:13px;color:var(--muted)">${fmt(e.minutes)}m${(e.startTime&&e.endTime)?`（${e.startTime}～${e.endTime}）`:''}</span>
                 <button class="del-btn" data-del="${e.id}">×</button>
-              </div>
-            ).join(''):<div class="muted" style="padding:10px 0 0 4px;">記録なし</div>}
+              </div>`
+            ).join(''):`<div class="muted" style="padding:10px 0 0 4px;">記録なし</div>`}
           </div>
-        </div>;
+        </div>`;
     }
 
-    // 月ビュー: 日付クリック → 詳細表示＆フォーム日付同期
     monthGrid.addEventListener('click',e=>{
       const d=e.target.closest('.day')?.dataset?.date;if(!d)return;
       document.getElementById('date').value = d;
       renderDayDetails(d);
     });
 
-    // 日付詳細の削除（hover抑止を適用）
     dayDetails.addEventListener('click',e=>{
       const id=e.target?.dataset?.del; if(!id) return;
       entries = entries.filter(x => String(x.id) !== String(id));
@@ -709,20 +752,20 @@
       const lastDate=new Date(y,m+1,0).getDate();
       const totals={};let monthMax=0;
       for(let d=1;d<=lastDate;d++){
-        const key=${y}-${pad(m+1)}-${pad(d)};
+        const key=`${y}-${pad(m+1)}-${pad(d)}`;
         const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
         totals[key]=sum;monthMax=Math.max(monthMax,sum);
       }
       const firstDow=(new Date(y,m,1).getDay()+6)%7;
       const blanks=Array.from({length:firstDow},()=>'<div class="mini-day"></div>').join('');
       const days=Array.from({length:lastDate},(_,i)=>{
-        const d=i+1,key=${y}-${pad(m+1)}-${pad(d)};
+        const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`;
         const sum=totals[key]||0;
         const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));
         const today=key===todayStr()? 'today' : '';
-        return <div class="mini-day lvl${level} ${today}">${d}</div>;
+        return `<div class="mini-day lvl${level} ${today}">${d}</div>`;
       }).join('');
-      return <div class="mini-month" data-y="${y}" data-m="${m}"><div class="mini-month-name">${m+1}月</div><div class="mini-month-grid">${blanks+days}</div></div>;
+      return `<div class="mini-month" data-y="${y}" data-m="${m}"><div class="mini-month-name">${m+1}月</div><div class="mini-month-grid">${blanks+days}</div></div>`;
     }
 
     function renderYear(){yearTitle.textContent=currentYear+'年';yearGrid.innerHTML=Array.from({length:12},(_,i)=>renderMiniMonth(currentYear,i)).join('');}
@@ -759,7 +802,6 @@
     prevWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()-7);dayDetails.style.display='none';renderWeek();});
     nextWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()+7);dayDetails.style.display='none';renderWeek();});
 
-    // 週ビュー: クリックで詳細表示＆フォーム日付同期
     weekView.addEventListener('click',e=>{
       const t=e.target.closest('.cell, .week-date'); if(!t) return;
       const d=t.dataset.date; if(!d) return;
@@ -781,8 +823,8 @@
       const y0=new Date().getFullYear();
       let yRange=[]; for(let y=y0-5;y<=y0+1;y++) yRange.push(y);
       let yearSel=document.getElementById('selectYear'),monthSel=document.getElementById('selectMonth');
-      yearSel.innerHTML=yRange.map(y=><option value="${y}">${y}年</option>).join(''); yearSel.value=selectedY;
-      monthSel.innerHTML=Array.from({length:12},(_,i)=><option value="${i}">${i+1}月</option>).join(''); monthSel.value=selectedM;
+      yearSel.innerHTML=yRange.map(y=>`<option value="${y}">${y}年</option>`).join(''); yearSel.value=selectedY;
+      monthSel.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i}">${i+1}月</option>`).join(''); monthSel.value=selectedM;
       monthModal.style.display='flex';
     }
     document.getElementById('closeMonthModal').onclick=()=>{monthModal.style.display='none';};
@@ -822,13 +864,13 @@
       const acts=activeGoals();
       if(!acts.length){activeGoalList.innerHTML='<div class="muted">現在の目標なし</div>';return;}
       activeGoalList.innerHTML='<h3 style="margin:8px 0 6px 4px;">現在の目標</h3>'+
-        acts.map(g=>{const idx=goals.indexOf(g);const s=goalStats(g);return <div class="goal-hist-item"><div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div><div class="goal-hist-kpis"><span class="gh-kpi">累計: <b>${fmt(s.accum/60,1)}h</b></span><span class="gh-kpi">目標: <b>${fmt(g.targetMin/60,1)}h</b></span><span class="gh-kpi">達成率: <b>${fmt(s.pct)}%</b></span></div><button class="goal-hist-del-btn" data-goaldel="${idx}">×</button></div>;}).join('');
+        acts.map(g=>{const idx=goals.indexOf(g);const s=goalStats(g);return `<div class="goal-hist-item"><div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div><div class="goal-hist-kpis"><span class="gh-kpi">累計: <b>${fmt(s.accum/60,1)}h</b></span><span class="gh-kpi">目標: <b>${fmt(g.targetMin/60,1)}h</b></span><span class="gh-kpi">達成率: <b>${fmt(s.pct)}%</b></span></div><button class="goal-hist-del-btn" data-goaldel="${idx}">×</button></div>`;}).join('');
     }
     function renderGoalHistory(){
       const past=pastGoals();
       if(!past.length){goalHistory.innerHTML='<div class="muted">過去の目標なし</div>';return;}
       goalHistory.innerHTML='<h3 style="margin:8px 0 6px 4px;">過去の目標</h3>'+
-        past.slice().reverse().map(g=>{const idx=goals.indexOf(g);const stats=goalStats(g);return <div class="goal-hist-item">
+        past.slice().reverse().map(g=>{const idx=goals.indexOf(g);const stats=goalStats(g);return `<div class="goal-hist-item">
             <div class="goal-hist-period">${g.start}〜${g.end} [${g.category&&g.category!=='all'?g.category:'全て'}]</div>
             <div class="goal-hist-kpis">
               <span class="gh-kpi">累計: <b>${fmt(stats.accum/60,1)}h</b></span>
@@ -836,7 +878,7 @@
               <span class="gh-kpi">達成率: <b>${fmt(stats.pct)}%</b></span>
             </div>
             <button class="goal-hist-del-btn" data-goaldel="${idx}">×</button>
-          </div>;}).join('');
+          </div>`;}).join('');
     }
     document.getElementById('tab-goal').addEventListener('click',e=>{
       const idx=e.target?.dataset?.goaldel;
@@ -869,13 +911,13 @@
     const newCat=document.getElementById('newCat'),addCatBtn=document.getElementById('addCat'),catList=document.getElementById('catList'),resetData=document.getElementById('resetData');
     function renderCats(){
       catList.innerHTML=categories.map((c,i)=>
-        <div class="cat-list-row">
+        `<div class="cat-list-row">
           <span class="cat-chip" data-edit="${i}">${c}</span>
           <button class="tab-btn" data-up="${i}">↑</button>
           <button class="tab-btn" data-down="${i}">↓</button>
           <button class="tab-btn danger" data-del="${i}">削除</button>
-        </div>
-      ).join('')||<div class="hint">カテゴリがありません。追加してください。</div>;
+        </div>`
+      ).join('')||`<div class="hint">カテゴリがありません。追加してください。</div>`;
     }
     addCatBtn.addEventListener('click',()=>{
       const name=(newCat.value||'').trim();if(!name)return;if(categories.includes(name)){toast('既に存在します');return;}
@@ -917,9 +959,14 @@
       const data={entries,categories,goals,exportedAt:new Date().toISOString()};
       const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      a.download=study_backup_${Date.now()}.json;a.click();URL.revokeObjectURL(a.href);
+      a.download=`study_backup_${Date.now()}.json`;a.click();URL.revokeObjectURL(a.href);
+      // モバイルメニューを閉じる
+      if(tabsEl.classList.contains('open')) closeMenu();
     });
-    document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());
+    document.getElementById('importBtn').addEventListener('click',()=>{
+      document.getElementById('importFile').click();
+      if(tabsEl.classList.contains('open')) closeMenu();
+    });
     document.getElementById('importFile').addEventListener('change',async()=>{
       const f=document.getElementById('importFile').files[0];if(!f)return;const text=await f.text();
       try{
@@ -943,7 +990,6 @@
       renderDayDetails(today);
     }
     init();
-
   })();
   </script>
 </body>
