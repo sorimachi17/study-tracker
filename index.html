@@ -283,9 +283,9 @@
     <button id="menuBtn" aria-label="メニュー">☰</button>
     <!-- ナビ（PCはそのまま、モバイルはオーバーレイに変形） -->
     <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="main">メイン</button>
-      <button class="tab-btn" data-tab="goal">目標</button>
-      <button class="tab-btn" data-tab="cats">カテゴリ</button>
+      <a href="#main" class="tab-btn active" data-tab="main">メイン</a>
+      <a href="#goal" class="tab-btn" data-tab="goal">目標</a>
+      <a href="#cats" class="tab-btn" data-tab="cats">カテゴリ</a>
       <button class="tab-btn" id="exportBtn" title="JSONで書き出し">エクスポート</button>
       <button class="tab-btn" id="importBtn" title="JSONを読み込み">インポート</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
@@ -493,6 +493,11 @@
       if(name==='goal'){renderGoal();renderActiveGoals();renderGoalHistory();}
       if(name==='cats') renderCats();
     }
+    function applyHash(){
+      const name = location.hash.replace('#','') || 'main';
+      if(sections[name]) setTab(name);
+    }
+    window.addEventListener('hashchange', applyHash);
     const tabsEl=document.getElementById('tabs');
     const backdrop=document.getElementById('menuBackdrop');
 
@@ -506,7 +511,8 @@
 
     tabsEl.addEventListener('click',e=>{
       const t=e.target.closest('.tab-btn[data-tab]');if(!t)return;
-      setTab(t.dataset.tab);
+      e.preventDefault();
+      location.hash = t.dataset.tab;
       closeMenu();
     });
     document.getElementById('summaryGoalTabs').addEventListener('click',e=>{
@@ -988,6 +994,7 @@
       estimateTimes();
       renderAll();
       renderDayDetails(today);
+      applyHash();
     }
     init();
   })();
