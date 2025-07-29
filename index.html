@@ -108,7 +108,7 @@
     /* time の中央寄せ（iOS/Safari対応） */
     input[type="time"]{
       -webkit-appearance:none;appearance:none;height:48px;min-width:120px;max-width:160px;
-      text-align:center;padding:0 10px;font-size:16px;line-height:normal;
+      text-align:center;padding:0 10px;font-size:16px;line-height:48px;
     }
     input[type="time"]::-webkit-datetime-edit{ padding:0; }
     input[type="time"]::-webkit-datetime-edit-fields-wrapper{ display:flex; align-items:center; }
@@ -199,7 +199,7 @@
     .date-block{flex:1;min-width:160px;}
     .form-row-flex{display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;flex-wrap:wrap;}
     @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
-    .time-input-row{display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px;}
+    .time-input-row{display:flex;gap:8px;align-items:center;margin-top:2px;margin-bottom:8px;}
     .time-fields{display:flex;gap:8px;flex:1 1 0;min-width:0;align-items:center;}
 
     /* トースト */
