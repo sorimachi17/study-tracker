@@ -6,204 +6,153 @@
   <title>Study Log</title>
   <style>
     :root{
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #dfe6ee;
-      --muted: #98a2b3;
-      --accent: #4ea46e;
-      --accent-2:#2c7a4a;
-      --danger:#f25f5c;
-      --chip: #232834;
-      --chip-muted: #545e70;
-      --chip-text: #fff;
-      --lvl0:#2a2e36;
-      --lvl1:#284e32;
-      --lvl2:#2f6e3e;
-      --lvl3:#2f8e4a;
-      --lvl4:#31a65a;
-      --goalhist-bg: #16191e;
+      --bg:#0f1115;--card:#171a21;--text:#dfe6ee;--muted:#98a2b3;
+      --accent:#4ea46e;--accent-2:#2c7a4a;--danger:#f25f5c;
+      --chip:#232834;--chip-muted:#545e70;--chip-text:#fff;
+      --lvl0:#2a2e36;--lvl1:#284e32;--lvl2:#2f6e3e;--lvl3:#2f8e4a;--lvl4:#31a65a;
+      --goalhist-bg:#16191e;
     }
     @media (prefers-color-scheme: light){
       :root{
-        --bg: #f7f8fb; --card:#fff; --text:#111; --muted:#667085;
-        --accent:#2ea043; --accent-2:#1f7a32; --danger:#f25f5c;
-        --chip:#e6f4ea; --chip-muted:#c2c7cf; --chip-text:#1a2a15;
-        --lvl0:#ebedf0; --lvl1:#c6e48b; --lvl2:#7bc96f; --lvl3:#239a3b; --lvl4:#196127;
+        --bg:#f7f8fb;--card:#fff;--text:#111;--muted:#667085;
+        --accent:#2ea043;--accent-2:#1f7a32;--danger:#f25f5c;
+        --chip:#e6f4ea;--chip-muted:#c2c7cf;--chip-text:#1a2a15;
+        --lvl0:#ebedf0;--lvl1:#c6e48b;--lvl2:#7bc96f;--lvl3:#239a3b;--lvl4:#196127;
         --goalhist-bg:#f4f5f8;
       }
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji";color:var(--text);background:var(--bg);line-height:1.5;}
+    html,body{margin:0;height:100%}
+    body{
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);background:var(--bg);line-height:1.5;overflow-y:auto;
+    }
+    body.menu-open{overflow:hidden;} /* メニュー展開中は背面スクロール禁止 */
 
     header{
-      position:sticky;top:0;z-index:20;background:var(--bg);
+      position:sticky;top:0;z-index:40;background:var(--bg);
       padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);
       display:flex;align-items:center;gap:8px;min-height:56px;
     }
-    h1{margin:0;font-size:18px;flex-grow:1}
+    h1{margin:0;font-size:18px;flex:1}
 
-    /* 角丸の四角いハンバーガー */
+    /* ハンバーガー（角の丸い四角） */
     #menuBtn{
-      width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-      border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);font-size:18px;cursor:pointer;
+      width:40px;height:40px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,.12);
+      background:var(--card);color:var(--text);font-size:18px;cursor:pointer;
     }
-    @media (prefers-color-scheme: light){#menuBtn{border-color:#e5e7eb;background:#fff;color:#111}}
+    @media (prefers-color-scheme: light){
+      #menuBtn{border-color:#e5e7eb;background:#fff;color:#111}
+    }
 
-    /* 通常タブ（PC） */
-    .tabs{display:flex;gap:8px;margin-top:8px;overflow:auto;padding-bottom:4px;flex-wrap:wrap;}
-    .tab-btn{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);padding:7px 13px;border-radius:999px;font-size:13px;width:auto;}
+    /* 上部タブ（PC向け） */
+    .tabs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    @media (max-width:640px){.tabs{display:none}}
+    .tab-btn{
+      border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);
+      padding:7px 13px;border-radius:999px;font-size:13px;white-space:nowrap;
+    }
     .tab-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(78,164,110,.2) inset}
+    .tab-btn.right{margin-left:auto}
 
-    /* モバイル：押し下げずオーバーレイで重ねる */
-    @media (max-width:640px){
-      .tabs{display:none}
-      #tabs.open{
-        display:flex;flex-direction:column;gap:10px;
-        position:fixed;left:8px;right:8px;top:60px;
-        background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:14px;
-        padding:12px;box-shadow:0 12px 34px rgba(0,0,0,.35);z-index:30;
-      }
-      #tabs.open .tab-btn{width:100%;height:44px;border-radius:12px;font-size:14px;display:flex;align-items:center;justify-content:center}
-      #tabs.open .tab-btn.right{margin-left:0}
-      #menuBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.2s;z-index:25}
-      #menuBackdrop.show{opacity:1;pointer-events:auto}
+    /* オーバーレイメニュー（押し下げなし＆重ね表示） */
+    #menuBackdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      opacity:0;pointer-events:none;transition:.2s;z-index:45;
+    }
+    #menuBackdrop.show{opacity:1;pointer-events:auto;}
+    #menuPanel{
+      position:fixed;left:8px;right:8px;top:64px; /* ヘッダー下に重ねる */
+      background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:14px;
+      padding:12px;box-shadow:0 12px 34px rgba(0,0,0,.35);
+      z-index:50;display:none;flex-direction:column;gap:10px;
+    }
+    #menuPanel.open{display:flex;}
+    .m-item{
+      height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background:var(--card);color:var(--text);font-size:14px;
+      display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer;
+    }
+    .m-item.primary{background:var(--accent);border:none;color:#fff;font-weight:600}
+    @media (prefers-color-scheme: light){
+      #menuPanel{border-color:#e5e7eb}
+      .m-item{border-color:#e5e7eb;background:#fff;color:#111}
     }
 
     main{padding:12px;max-width:980px;margin:0 auto}
     section{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:12px;}
+
     .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     @media (max-width:640px){.row{grid-template-columns:1fr}}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 
-    /* 入力系 */
+    /* 入力統一高 */
     input,select,button,textarea{
       width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
       background:#0e1016;color:var(--text);font-size:16px;display:block;
     }
-    @media (prefers-color-scheme: light){input,select,button,textarea{background:#fff;color:#111;border-color:#e5e7eb}}
-
-    /* date リセット + 高さ固定 */
-    input[type="date"]{-webkit-appearance:none;appearance:none;position:relative;padding-right:44px;margin:0;background-clip:padding-box;height:48px;}
-    input[type="date"]::-webkit-date-and-time-value{text-align:left}
-    input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
-
-    /* ▼ time の縦中央寄せ（iOS Safari 対策） */
-    .time-fields input[type="time"]{
-      -webkit-appearance:none;appearance:none;height:48px;min-width:120px;max-width:160px;flex:1 1 0;text-align:center;padding:0 10px;font-size:16px;line-height:48px;
+    @media (prefers-color-scheme: light){
+      input,select,button,textarea{background:#fff;color:#111;border-color:#e5e7eb}
     }
-    /* 内部編集領域をflexで中央寄せ */
-    input[type="time"]::-webkit-datetime-edit,
-    input[type="time"]::-webkit-date-and-time-value,
-    input[type="time"]::-webkit-datetime-edit-fields-wrapper{
-      display:flex;align-items:center;height:48px;
+    /* date 右ズレ＆高さ */
+    input[type="date"]{
+      -webkit-appearance:none;appearance:none;position:relative;
+      padding-right:44px;margin:0;background-clip:padding-box;height:48px;line-height:48px;
     }
-    /* 余白を詰める */
-    input[type="time"]::-webkit-datetime-edit-hour-field,
-    input[type="time"]::-webkit-datetime-edit-minute-field,
-    input[type="time"]::-webkit-datetime-edit-ampm-field{padding:0 2px}
+    input[type="date"]::-webkit-date-and-time-value{ text-align:left; }
+    input[type="date"]::-webkit-calendar-picker-indicator{
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    }
 
-    .tabs .tab-btn{width:auto;}
-    button.primary{background:var(--accent);color:#fff;border:none;font-weight:600}
-    button.secondary{background:transparent}
-    .inline{display:flex;gap:8px;align-items:center}
-    .chip{display:inline-block;min-width:40px;text-align:center;padding:4px 10px;border-radius:16px;background:var(--chip-muted);color:var(--chip-text);font-size:13px;font-weight:500;letter-spacing:.2px;}
-    .chip.main{background:var(--chip)} .chip.accent{background:var(--accent);color:#fff} .chip.muted{background:var(--chip-muted);color:var(--chip-text)}
-    .muted{color:var(--muted)} .right{margin-left:auto}
+    /* time の中央寄せ（iOS含む） */
+    input[type="time"]{
+      -webkit-appearance:none;appearance:none;height:48px;min-width:120px;max-width:160px;
+      text-align:center;padding:0 10px;font-size:16px;line-height:48px;
+    }
+    input[type="time"]::-webkit-datetime-edit{ padding:0; }
+    input[type="time"]::-webkit-datetime-edit-fields-wrapper{ display:flex; align-items:center; }
+    input[type="time"]::-webkit-date-and-time-value{ text-align:center; }
 
-    /* summary card */
     .summary-card{background:var(--card);border:1.5px solid var(--accent);border-radius:14px;margin-bottom:18px;padding:18px 14px 12px;display:flex;flex-direction:column;gap:8px;font-size:15px;}
-    .summary-kpi{font-size:26px;font-weight:bold}
+    .summary-kpi{font-size:26px;font-weight:700}
     .summary-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
     @media (max-width:600px){.summary-list{grid-template-columns:1fr}}
     .summary-progress-bar{width:100%;height:11px;border-radius:7px;background:var(--lvl0);margin:10px 0 4px;overflow:hidden}
     .summary-progress-bar-inner{height:100%;border-radius:7px;background:var(--accent);transition:.25s;width:0}
 
-    /* 共通プログレスバー */
-    .progress{width:100%;height:10px;border-radius:8px;background:var(--lvl0);overflow:hidden}
-    .progress-inner{height:100%;background:var(--accent);border-radius:8px;transition:.2s;width:0}
-
-    /* カレンダー */
-    .calendar-head{display:flex;align-items:center;gap:2px;margin-bottom:8px;justify-content:center}
-    .calendar-nav-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--lvl0);font-size:19px;cursor:pointer;transition:.15s;margin:0 3px}
-    .calendar-nav-btn:active{background:var(--lvl1)}
-    .calendar-nav-select{height:32px;border-radius:6px;background:var(--lvl0);color:var(--text);border:none;padding:0 4px;font-size:14px;margin:0 3px;width:72px}
-    .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s}
-    .calendar-title-btn:hover{background:var(--lvl1)}
-    .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7,1fr)}
+    .calendar-head{display:flex;align-items:center;gap:2px;margin-bottom:8px;justify-content:center;}
+    .calendar-nav-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--lvl0);font-size:19px;cursor:pointer;transition:.15s;margin:0 3px;}
+    .calendar-nav-select{height:32px;border-radius:6px;background:var(--lvl0);color:var(--text);border:none;padding:0 4px;font-size:14px;margin:0 3px;width:72px;}
+    .calendar-title-btn{font-size:17px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;transition:background .15s;}
+    .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7,1fr);}
     .dow{font-size:12px;color:var(--muted);text-align:center}
-    .day{aspect-ratio:1/1;border-radius:6px;padding:4px;position:relative;display:flex;flex-direction:column;justify-content:space-between;background:var(--lvl0);cursor:pointer}
-    .day .num{font-size:12px;opacity:.9}
-    .day .mins{font-size:11px;text-align:right;opacity:.95}
-    .lvl0{background:var(--lvl0)} .lvl1{background:var(--lvl1)} .lvl2{background:var(--lvl2)} .lvl3{background:var(--lvl3)} .lvl4{background:var(--lvl4)}
+    .day{aspect-ratio:1/1;border-radius:6px;padding:4px;display:flex;flex-direction:column;justify-content:space-between;background:var(--lvl0);cursor:pointer;}
     .day.today{outline:2px solid var(--accent);outline-offset:0}
 
-    /* 年間カレンダー */
-    .year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
-    .mini-month{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px;cursor:pointer}
-    .mini-month-name{text-align:center;font-size:12px;color:var(--muted);margin-bottom:2px}
-    .mini-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-    .mini-day{aspect-ratio:1/1;font-size:9px;border-radius:2px;display:flex;align-items:center;justify-content:center}
-    .mini-day.today{outline:1px solid var(--accent)}
+    .year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+    .mini-month{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px;cursor:pointer;}
+    .mini-day{aspect-ratio:1/1;font-size:9px;border-radius:2px;display:flex;align-items:center;justify-content:center;}
 
-    /* 日別詳細 */
-    .day-detail-wrap{background:var(--card);border-radius:11px;margin-bottom:10px;box-shadow:0 2px 10px rgba(30,40,45,.06);border:1.5px solid var(--lvl0);padding:18px 15px 8px;max-width:440px}
-    .day-detail-title{font-size:19px;font-weight:600;margin-bottom:2px;letter-spacing:.5px}
-    .day-detail-total{font-size:14px;color:var(--muted);margin-bottom:10px}
-    .day-detail-list .rec-row{display:flex;align-items:center;gap:8px;background:var(--lvl0);border-radius:8px;padding:6px 8px;margin-bottom:6px;border:1px solid rgba(255,255,255,.07)}
-    .day-detail-list .rec-row .chip{min-width:56px;max-width:110px;white-space:nowrap;padding:3px 11px;font-size:13px;margin-right:4px;border-radius:12px;background:var(--chip-muted);color:var(--chip-text);text-align:center;height:28px;display:flex;align-items:center;justify-content:center}
-    .day-detail-list .rec-row .del-btn{padding:0 11px;min-width:0;font-size:15px;border-radius:7px;background:var(--muted);color:var(--bg);border:none;margin-left:auto;transition:.2s;height:28px;line-height:1;display:flex;align-items:center;justify-content:center;width:38px}
-    .day-detail-list .rec-row .del-btn.no-hover:hover{background:var(--muted)}
-
-    /* 目標カード */
-    .goal-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px;margin-bottom:12px}
-    .goal-list-card{margin-top:0}
-    .goal-hist-item{background:var(--goalhist-bg);border-radius:12px;margin-bottom:12px;padding:16px 15px 12px;box-shadow:0 2px 10px rgba(30,40,45,.07);border:1px solid rgba(100,150,110,0.10);max-width:440px;display:flex;flex-direction:column;gap:6px}
-    .goal-hist-period{font-size:15px;font-weight:600;margin-bottom:0;letter-spacing:.2px}
-    .goal-hist-kpis{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin:2px 0 0 2px}
-    .goal-hist-kpis .gh-kpi{color:var(--muted)}
-    .goal-hist-del-btn{align-self:flex-end;padding:2px 11px;border-radius:8px;background:var(--muted);color:var(--bg);border:none;font-size:13px;margin-top:4px;transition:.2s}
-    .goal-hist-del-btn.no-hover:hover{background:var(--muted);color:var(--bg)}
-
-    /* 目標保存・削除ボタン */
-    .goal-btns{display:flex;gap:14px;justify-content:space-between;margin-top:14px;margin-bottom:18px}
-    .goal-btns .primary,.goal-btns .danger{width:48%;min-width:90px;font-size:16px;border-radius:13px;padding:13px 0}
-
-    /* 週間ヒートマップ */
-    .week-heatmap{display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;font-size:10px;margin-top:6px}
-    .week-heatmap .cell{height:12px;border-radius:2px}
-    .week-heatmap .week-date{cursor:pointer}
-    .week-heatmap .hour-label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
-
-    /* フォーム */
-    .form-row-flex{display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;flex-wrap:wrap}
-    @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px}}
-    .input-block{flex:1}
-    .time-input-row{display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px}
-    .time-input-row label{font-size:12px;color:var(--muted)}
-    .time-fields{display:flex;gap:8px;flex:1 1 0;min-width:0}
-    .entry-submit-row{display:flex;justify-content:center;margin-top:6px;margin-bottom:0}
-    .entry-submit-row button{max-width:220px;width:80%;font-size:16px;padding:15px 0;border-radius:12px}
-
-    /* カテゴリ */
-    .cat-list-row{display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11)}
-    .cat-chip{background:var(--chip-muted);color:var(--chip-text);border-radius:12px;padding:5px 14px;font-size:14px;margin-right:4px;height:28px;display:flex;align-items:center;justify-content:center;flex:1 1 auto;white-space:nowrap}
-    .cat-list-row .cat-chip{cursor:pointer}
-    .cat-list-row .tab-btn,.cat-list-row .tab-btn.danger{font-size:12px;padding:0 8px;border-radius:8px;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:auto}
-
-    /* メインレイアウト */
-    .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
-    .calendar-card,.records-card{flex:1;min-width:260px}
-    .records-card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(30,40,45,.07);min-height:260px}
-    select{height:48px}
-    .minutes-block{flex:0 0 140px}
-    .minutes-block input{max-width:100%}
-    @media (max-width:600px){.minutes-block{flex-basis:auto}}
-    .date-block{flex:1;min-width:160px}
-    @media (max-width:600px){.date-block{flex-basis:auto}}
-    .input-block input[type="date"], .input-block input[type="text"], .input-block select{height:48px}
+    /* 記録 UI */
+    .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
+    .calendar-card,.records-card{flex:1;min-width:260px;}
+    .records-card{
+      background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;
+      box-shadow:0 2px 10px rgba(30,40,45,0.07);
+      min-height:280px; /* 日付が空でも高さが変わらないよう固定 */
+    }
+    select{height:48px;}
+    .minutes-block{flex:0 0 140px;}
+    .date-block{flex:1;min-width:160px;}
+    .form-row-flex{display:flex;gap:12px;align-items:flex-end;margin-bottom:4px;flex-wrap:wrap;}
+    @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
+    .time-input-row{display:flex;gap:8px;align-items:center;margin-top:6px;margin-bottom:14px;}
+    .time-fields{display:flex;gap:8px;flex:1 1 0;min-width:0;}
 
     /* トースト */
-    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:40}
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#11161c;color:#dfe6ee;padding:10px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:60}
     .toast.show{opacity:1}
   </style>
 </head>
@@ -211,17 +160,32 @@
   <header>
     <h1>📘 Study Log</h1>
     <button id="menuBtn" aria-label="メニュー">☰</button>
+
+    <!-- PC 表示用タブ（そのまま維持） -->
     <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="main" id="navMain">メイン</button>
-      <button class="tab-btn" data-tab="goal" id="navGoal">目標</button>
-      <button class="tab-btn" data-tab="cats" id="navCats">カテゴリ</button>
-      <button class="tab-btn" id="exportBtn" title="JSONで書き出し">エクスポート</button>
+      <!-- data-tab: 同一ページ内タブ切替 / a[href]: 外部ページ遷移 どちらも可 -->
+      <button class="tab-btn active" data-tab="main">メイン</button>
+      <button class="tab-btn" data-tab="goal">目標</button>
+      <button class="tab-btn" data-tab="cats">カテゴリ</button>
+      <!-- 外部ページを置きたい場合は例：<a class="tab-btn" href="/another.html">別ページ</a> -->
+      <button class="tab-btn right" id="exportBtn" title="JSONで書き出し">エクスポート</button>
       <button class="tab-btn" id="importBtn" title="JSONを読み込み">インポート</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
     </div>
   </header>
 
+  <!-- モバイル用：重ねるオーバーレイメニュー -->
   <div id="menuBackdrop"></div>
+  <nav id="menuPanel" aria-hidden="true">
+    <!-- 同一ページタブ -->
+    <button class="m-item" data-tab="main">メイン</button>
+    <button class="m-item" data-tab="goal">目標</button>
+    <button class="m-item" data-tab="cats">カテゴリ</button>
+    <!-- ここに外部ページのリンクを置けば遷移可能 -->
+    <!-- 例）<a class="m-link m-item" href="/goals.html">別ページ（例）</a> -->
+    <button class="m-item" id="mExport">エクスポート</button>
+    <button class="m-item" id="mImport">インポート</button>
+  </nav>
 
   <main>
     <!-- メイン -->
@@ -230,7 +194,9 @@
         <div id="summaryGoalTabs" class="tabs" style="margin-bottom:6px;"></div>
         <div id="summaryContent"></div>
       </div>
+
       <div class="flex-split">
+        <!-- カレンダー -->
         <div class="calendar-card">
           <div class="calendar-head" id="calendarNav">
             <button id="prevMonth" class="calendar-nav-btn">&lt;</button>
@@ -251,28 +217,31 @@
           <div class="calendar-grid" id="dowRow"></div>
           <div class="calendar-grid" id="monthGrid"></div>
           <div id="dayDetails" style="margin-top:10px"></div>
-          <div id="yearView" style="display:none"><div id="yearGrid" class="year-grid"></div></div>
+          <div id="yearView" style="display:none">
+            <div id="yearGrid" class="year-grid"></div>
+          </div>
           <div id="weekView" style="display:none"></div>
         </div>
-        <!-- 記録入力 -->
+
+        <!-- 記録 -->
         <div class="records-card">
           <form id="entryForm">
             <div class="form-row-flex">
-              <div class="input-block date-block">
+              <div class="date-block">
                 <label>日付</label>
                 <input type="date" id="date" required>
               </div>
-              <div class="input-block">
+              <div class="">
                 <label>カテゴリ</label>
                 <select id="category"></select>
               </div>
-              <div class="input-block minutes-block">
+              <div class="minutes-block">
                 <label>勉強時間 (m)</label>
                 <input type="text" id="minutes" placeholder="例: 45" required autocomplete="off">
               </div>
             </div>
             <div class="time-input-row">
-              <label>開始・終了時刻</label>
+              <label style="font-size:12px;color:var(--muted)">開始・終了時刻</label>
               <div class="time-fields">
                 <input type="time" id="startTime" step="60">
                 <span style="line-height:1.8;">～</span>
@@ -280,7 +249,7 @@
               </div>
             </div>
             <div class="entry-submit-row">
-              <button type="submit" class="primary">記録する</button>
+              <button type="submit" class="m-item primary" style="height:48px;border-radius:12px">記録する</button>
             </div>
           </form>
         </div>
@@ -301,9 +270,9 @@
           <div class="row" style="margin-top:8px">
             <div><label>カテゴリ</label><select id="goalCategory"></select></div>
           </div>
-          <div class="goal-btns">
-            <button class="primary" type="submit">保存</button>
-            <button class="danger" type="button" id="goalDeleteBtn">削除</button>
+          <div style="display:flex;gap:14px;justify-content:space-between;margin-top:14px;margin-bottom:18px;">
+            <button class="m-item primary" type="submit">保存</button>
+            <button class="m-item" type="button" id="goalDeleteBtn">削除</button>
           </div>
         </form>
         <div id="activeGoalList" class="goal-list-card" style="margin-top:10px"></div>
@@ -317,18 +286,19 @@
     <section id="tab-cats" style="display:none">
       <div class="row">
         <div><label>新規カテゴリ名</label><input type="text" id="newCat" placeholder="例: IELTSリーディング"></div>
-        <div style="align-self:end"><button id="addCat" class="primary" type="button">追加</button></div>
+        <div style="align-self:end"><button id="addCat" class="m-item primary" type="button">追加</button></div>
       </div>
       <div style="margin-top:8px" id="catList" class="list"></div>
-      <div class="inline" style="margin-top:12px; gap:8px">
-        <button id="resetData" class="tab-btn danger" type="button">全データ削除</button>
+      <div style="margin-top:12px; display:flex; gap:8px">
+        <button id="resetData" class="m-item" type="button">全データ削除</button>
       </div>
     </section>
   </main>
 
+  <!-- トースト -->
   <div id="toast" class="toast"></div>
 
-  <!-- 月選択モーダル -->
+  <!-- 月選択モーダル（既存のまま） -->
   <div id="monthModal" class="modal-bg" style="display:none">
     <div class="modal-content">
       <label>年月を選択</label>
@@ -337,14 +307,15 @@
         <select id="selectMonth"></select>
       </div>
       <div class="modal-actions">
-        <button class="secondary" id="closeMonthModal">キャンセル</button>
-        <button class="primary" id="gotoMonthBtn">移動</button>
+        <button class="m-item" id="closeMonthModal">キャンセル</button>
+        <button class="m-item primary" id="gotoMonthBtn">移動</button>
       </div>
     </div>
   </div>
 
   <script>
   (()=> {
+    // ----- 基本ユーティリティ
     const KEYS = {entries:'studyEntries_v7',cats:'studyCategories_v7',goals:'studyGoals_v7'};
     const pad = n => String(n).padStart(2,'0');
     const fmtTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -355,9 +326,11 @@
     const toast = msg => { const t=document.getElementById('toast'); if(!t) return; t.textContent=msg||'保存しました'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); };
     const load = (k,fallback)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v??fallback }catch(e){ return fallback } };
     const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
     let entries=load(KEYS.entries,[]),
         categories=load(KEYS.cats,['IELTSリーディング','単語','スピーキング','リスニング','文法','ライティング']),
         goals=load(KEYS.goals,[]);
+
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
     const startOfWeek = d => { const t=new Date(d); const diff=(t.getDay()+6)%7; t.setDate(t.getDate()-diff); t.setHours(0,0,0,0); return t; };
     const fmtWeekLabel = start => { const end=new Date(start); end.setDate(start.getDate()+6); return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}`; };
@@ -365,40 +338,104 @@
     let summaryGoalIndex=0;
     const activeGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.start)<=today&&parseDateStr(g.end)>=today);};
     const pastGoals=()=>{const today=new Date();return goals.filter(g=>parseDateStr(g.end)<today);};
-    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
+    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});    
 
-    /* -------- ナビ（確実に動くように個別バインド） -------- */
-    const tabsEl=document.getElementById('tabs');
-    const backdrop=document.getElementById('menuBackdrop');
-    const closeMenu=()=>{ tabsEl.classList.remove('open'); backdrop.classList.remove('show'); };
+    // ----- メニュー（重ねるオーバーレイ）
+    const body = document.body;
+    const menuBtn = document.getElementById('menuBtn');
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('menuBackdrop');
 
-    document.getElementById('menuBtn').addEventListener('click',()=>{
-      const willOpen=!tabsEl.classList.contains('open');
-      tabsEl.classList.toggle('open',willOpen);
-      backdrop.classList.toggle('show',willOpen);
+    const openMenu = ()=>{ menuPanel.classList.add('open'); backdrop.classList.add('show'); body.classList.add('menu-open'); };
+    const closeMenu = ()=>{ menuPanel.classList.remove('open'); backdrop.classList.remove('show'); body.classList.remove('menu-open'); };
+
+    menuBtn.addEventListener('click', ()=>{
+      if(menuPanel.classList.contains('open')) closeMenu(); else openMenu();
     });
-    backdrop.addEventListener('click',closeMenu);
+    backdrop.addEventListener('click', closeMenu);
 
-    const tabBtns=[...document.querySelectorAll('.tab-btn[data-tab]')];
+    // 外部リンク(<a>)はそのまま遷移、data-tab は SPA 切替
+    menuPanel.addEventListener('click', (e)=>{
+      const a = e.target.closest('a[href]');
+      if(a){ closeMenu(); return; } // デフォルトの遷移を許可
+      const t = e.target.closest('[data-tab]');
+      if(t){ setTab(t.dataset.tab); closeMenu(); }
+    });
+
+    // PC用タブ（上部バー）も同様に両対応
+    const tabsEl=document.getElementById('tabs');
+    tabsEl.addEventListener('click',e=>{
+      const a = e.target.closest('a[href]');
+      if(a){ return; } // デフォルト遷移
+      const t=e.target.closest('.tab-btn[data-tab]');
+      if(!t) return;
+      e.preventDefault();
+      setTab(t.dataset.tab);
+    });
+
+    // Export/Import（PC/モバイル両方）
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    const mExport = document.getElementById('mExport');
+    const mImport = document.getElementById('mImport');
+
+    function doExport(){
+      const data={entries,categories,goals,exportedAt:new Date().toISOString()};
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download=`study_backup_${Date.now()}.json`;a.click();URL.revokeObjectURL(a.href);
+      toast('エクスポートしました');
+    }
+    function askImport(){ importFile.click(); }
+    exportBtn.addEventListener('click',doExport);
+    mExport.addEventListener('click',()=>{ doExport(); closeMenu(); });
+    importBtn.addEventListener('click',askImport);
+    mImport.addEventListener('click',()=>{ askImport(); closeMenu(); });
+    importFile.addEventListener('change',async()=>{
+      const f=importFile.files[0]; if(!f) return; const text=await f.text();
+      try{
+        const data=JSON.parse(text); if(!data||!Array.isArray(data.entries)) throw new Error('不正な形式');
+        entries=data.entries; categories=data.categories||categories; goals=data.goals||[];
+        save(KEYS.entries,entries); save(KEYS.cats,categories); save(KEYS.goals,goals);
+        renderAll(); toast('読み込みました');
+      }catch(err){ alert('読み込みに失敗: '+err.message); }
+      finally{ importFile.value=''; }
+    });
+
+    // ----- タブ制御
     const sections={main:document.getElementById('tab-main'),goal:document.getElementById('tab-goal'),cats:document.getElementById('tab-cats')};
     function setTab(name){
-      for(const btn of tabBtns){btn.classList.toggle('active',btn.dataset.tab===name);}
+      // 上部タブの active 表示
+      [...tabsEl.querySelectorAll('.tab-btn[data-tab]')].forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
       Object.entries(sections).forEach(([k,sec])=>{sec.style.display=(k===name)?'block':'none';});
       if(name==='main'){renderSummary();renderWeek();renderMonth();}
       if(name==='goal'){renderGoal();renderActiveGoals();renderGoalHistory();}
       if(name==='cats'){renderCats();}
-      closeMenu();
     }
-    document.getElementById('navMain').addEventListener('click',()=>setTab('main'));
-    document.getElementById('navGoal').addEventListener('click',()=>setTab('goal'));
-    document.getElementById('navCats').addEventListener('click',()=>setTab('cats'));
-
     document.getElementById('summaryGoalTabs').addEventListener('click',e=>{
       const i=e.target?.dataset?.selgoal;
       if(i!==undefined){summaryGoalIndex=Number(i);renderSummary();}
     });
 
-    /* -------- サマリー -------- */
+    // ----- サマリー
+    function estimateGoalETA(goal, achievedMin){
+      const target = goal?.targetMin || 0;
+      if(!goal || !target) return { text:'—' };
+      if(achievedMin >= target) return { text:'達成済み' };
+      const s = parseDateStr(goal.start);
+      const e = parseDateStr(goal.end);
+      const today = new Date();
+      const until = new Date(Math.min(e.getTime(), today.getTime()));
+      const elapsedDays = Math.max(1, Math.floor((until - s)/86400000) + 1);
+      const ratio = achievedMin / target;
+      if(ratio <= 0) return { text:'—' };
+      const estDays = Math.ceil(elapsedDays * (1 - ratio) / ratio);
+      const eta = new Date(today);
+      eta.setDate(today.getDate() + estDays);
+      return { text: `${estDays}日後（${eta.getFullYear()}/${pad(eta.getMonth()+1)}/${pad(eta.getDate())}）`, eta };
+    }
+
     function renderSummary() {
       const wrap=document.getElementById('summaryContent');
       const tabWrap=document.getElementById('summaryGoalTabs');
@@ -438,8 +475,7 @@
       if (goal) {
         tgt = goal.targetMin;
         pct = Math.min(100, Math.round((totalMin / Math.max(1,tgt))*100));
-        const eta = estimateGoalETA(goal, totalMin);
-        predict = eta.text;
+        predict = estimateGoalETA(goal, totalMin).text;
       }
 
       wrap.innerHTML =
@@ -453,10 +489,11 @@
          <div class="summary-list" style="margin-top:4px;">
            ${Object.entries(catTotals).map(([c,v])=>`<div>${c}: <b>${fmt(v/60,1)}</b>h</div>`).join('')}
          </div>`;
-      document.getElementById('mainProgressBar').style.width = (goal?Math.min(100, Math.round((totalMin / Math.max(1,goal.targetMin))*100)):0) + '%';
+      const bar = document.getElementById('mainProgressBar');
+      bar.style.width = (goal?Math.min(100, Math.round((totalMin / Math.max(1,goal.targetMin))*100)):0) + '%';
     }
 
-    /* -------- 週ヒートマップ -------- */
+    // ----- 週ヒートマップ
     function weekHeatmapHTML(start){
       const heat=Array.from({length:7},()=>Array(24).fill(0));
       for(let i=0;i<7;i++){
@@ -498,18 +535,19 @@
     }
     function renderWeek(){weekView.innerHTML=weekHeatmapHTML(currentWeekStart);weekTitle.textContent=fmtWeekLabel(currentWeekStart);}
 
-    /* -------- カテゴリ選択 -------- */
+    // ----- カテゴリ選択
     const catSel=document.getElementById('category');
     const goalCatSel=document.getElementById('goalCategory');
     function renderCategorySelect(){
-      catSel.innerHTML=''; goalCatSel.innerHTML='<option value="all">全て</option>';
+      catSel.innerHTML='';
+      goalCatSel.innerHTML='<option value="all">全て</option>';
       categories.forEach(c=>{
         const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);
         const g=document.createElement('option');g.value=c;g.textContent=c;goalCatSel.appendChild(g);
       });
     }
 
-    /* -------- 記録フォーム -------- */
+    // ----- 記録フォーム
     const form=document.getElementById('entryForm'),
           dateEl=document.getElementById('date'),
           minEl=document.getElementById('minutes'),
@@ -554,7 +592,7 @@
       if(activeDayDetail) renderDayDetails(activeDayDetail);
     });
 
-    /* -------- カレンダー -------- */
+    // ----- カレンダー周り（既存ロジック）
     const dowRow=document.getElementById('dowRow'),
           monthGrid=document.getElementById('monthGrid'),
           monthTitle=document.getElementById('monthTitle'),
@@ -580,10 +618,7 @@
       dowRow.innerHTML=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
       const y=currentYM.y,m=currentYM.m;monthTitle.textContent=fmtDateLabel(new Date(y,m,1));
       const lastDate=new Date(y,m+1,0).getDate();const totals={};let monthMax=0;
-      for(let d=1;d<=lastDate;d++){
-        const key=`${y}-${pad(m+1)}-${pad(d)}`;const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
-        totals[key]=sum;monthMax=Math.max(monthMax,sum);
-      }
+      for(let d=1;d<=lastDate;d++){const key=`${y}-${pad(m+1)}-${pad(d)}`;const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);totals[key]=sum;monthMax=Math.max(monthMax,sum);}
       const firstDow=(new Date(y,m,1).getDay()+6)%7;const blanks=Array.from({length:firstDow},()=>'<div></div>').join('');
       monthGrid.innerHTML=blanks+Array.from({length:lastDate},(_,i)=>{
         const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`,sum=totals[key]||0;
@@ -636,13 +671,15 @@
       const lastDate=new Date(y,m+1,0).getDate();
       const totals={};let monthMax=0;
       for(let d=1;d<=lastDate;d++){
-        const key=`${y}-${pad(m+1)}-${pad(d)}`;const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
+        const key=`${y}-${pad(m+1)}-${pad(d)}`;
+        const sum=entries.filter(e=>e.date===key).reduce((a,b)=>a+b.minutes,0);
         totals[key]=sum;monthMax=Math.max(monthMax,sum);
       }
       const firstDow=(new Date(y,m,1).getDay()+6)%7;
       const blanks=Array.from({length:firstDow},()=>'<div class="mini-day"></div>').join('');
       const days=Array.from({length:lastDate},(_,i)=>{
-        const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`;const sum=totals[key]||0;
+        const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`;
+        const sum=totals[key]||0;
         const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));
         const today=key===todayStr()? 'today' : '';
         return `<div class="mini-day lvl${level} ${today}">${d}</div>`;
@@ -684,6 +721,7 @@
     prevWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()-7);dayDetails.style.display='none';renderWeek();});
     nextWeekBtn.addEventListener("click",()=>{currentWeekStart.setDate(currentWeekStart.getDate()+7);dayDetails.style.display='none';renderWeek();});
 
+    // 週ビュー click
     weekView.addEventListener('click',e=>{
       const t=e.target.closest('.cell, .week-date'); if(!t) return;
       const d=t.dataset.date; if(!d) return;
@@ -697,7 +735,26 @@
       currentYM={y,m}; setCalendarView('month'); renderMonth();
     });
 
-    /* -------- 目標 -------- */
+    // 月選択モーダル
+    const monthModal=document.getElementById('monthModal');
+    const monthTitleEl=document.getElementById('monthTitle');
+    monthTitleEl.addEventListener('click',()=>{showMonthModal(currentYM.y,currentYM.m);});
+    function showMonthModal(selectedY,selectedM){
+      const y0=new Date().getFullYear();
+      let yRange=[]; for(let y=y0-5;y<=y0+1;y++) yRange.push(y);
+      let yearSel=document.getElementById('selectYear'),monthSel=document.getElementById('selectMonth');
+      yearSel.innerHTML=yRange.map(y=>`<option value="${y}">${y}年</option>`).join(''); yearSel.value=selectedY;
+      monthSel.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i}">${i+1}月</option>`).join(''); monthSel.value=selectedM;
+      monthModal.style.display='flex';
+    }
+    document.getElementById('closeMonthModal').onclick=()=>{monthModal.style.display='none';};
+    document.getElementById('gotoMonthBtn').onclick=()=>{
+      const y=parseInt(document.getElementById('selectYear').value);
+      const m=parseInt(document.getElementById('selectMonth').value);
+      currentYM={y,m}; monthModal.style.display='none'; renderMonth();
+    };
+
+    // ----- 目標管理
     const goalForm=document.getElementById('goalForm'),
           goalStart=document.getElementById('goalStart'),
           goalEnd=document.getElementById('goalEnd'),
@@ -769,17 +826,17 @@
       renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
     });
 
-    /* -------- カテゴリ管理 -------- */
+    // ----- カテゴリ管理
     const newCat=document.getElementById('newCat'),addCatBtn=document.getElementById('addCat'),catList=document.getElementById('catList'),resetData=document.getElementById('resetData');
     function renderCats(){
       catList.innerHTML=categories.map((c,i)=>
-        `<div class="cat-list-row">
-          <span class="cat-chip" data-edit="${i}">${c}</span>
-          <button class="tab-btn" data-up="${i}">↑</button>
-          <button class="tab-btn" data-down="${i}">↓</button>
-          <button class="tab-btn danger" data-del="${i}">削除</button>
+        `<div class="cat-list-row" style="display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11);">
+          <span class="cat-chip" style="background:var(--chip-muted);color:var(--chip-text);border-radius:12px;padding:5px 14px;font-size:14px;margin-right:4px;height:28px;display:flex;align-items:center;justify-content:center;flex:1 1 auto;white-space:nowrap;" data-edit="${i}">${c}</span>
+          <button class="m-item" style="height:28px;min-width:40px" data-up="${i}">↑</button>
+          <button class="m-item" style="height:28px;min-width:40px" data-down="${i}">↓</button>
+          <button class="m-item" style="height:28px;min-width:48px" data-del="${i}">削除</button>
         </div>`
-      ).join('')||`<div class="hint">カテゴリがありません。追加してください。</div>`;
+      ).join('')||`<div class="muted">カテゴリがありません。追加してください。</div>`;
     }
     addCatBtn.addEventListener('click',()=>{
       const name=(newCat.value||'').trim();if(!name)return;if(categories.includes(name)){toast('既に存在します');return;}
@@ -816,28 +873,7 @@
       save(KEYS.cats,categories);renderAll();toast('初期化しました');
     });
 
-    /* -------- JSON入出力 -------- */
-    document.getElementById('exportBtn').addEventListener('click',()=>{
-      const data={entries,categories,goals,exportedAt:new Date().toISOString()};
-      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      a.download=`study_backup_${Date.now()}.json`;a.click();URL.revokeObjectURL(a.href);
-      closeMenu();
-    });
-    document.getElementById('importBtn').addEventListener('click',()=>{
-      document.getElementById('importFile').click();
-      closeMenu();
-    });
-    document.getElementById('importFile').addEventListener('change',async()=>{
-      const f=document.getElementById('importFile').files[0];if(!f)return;const text=await f.text();
-      try{
-        const data=JSON.parse(text);if(!data||!Array.isArray(data.entries))throw new Error('不正な形式');
-        entries=data.entries;categories=data.categories||categories;goals=data.goals||[];
-        save(KEYS.entries,entries);save(KEYS.cats,categories);save(KEYS.goals,goals);renderAll();toast('読み込みました');
-      }catch(err){alert('読み込みに失敗:'+err.message);}finally{document.getElementById('importFile').value='';}
-    });
-
-    /* -------- 一括描画 -------- */
+    // ----- まとめレンダリング
     function renderAll(){
       renderCategorySelect();renderSummary();renderWeek();renderMonth();renderYear();
       renderGoal();renderActiveGoals();renderGoalHistory();renderCats();
