@@ -190,7 +190,8 @@
 
     /* カテゴリ管理 */
     .cat-btn{height:28px;width:36px;min-width:36px;border-radius:8px;padding:0;font-size:13px;}
-    .cat-chip{width:120px;flex:0 0 120px;display:flex;align-items:center;justify-content:center;padding:5px 8px;font-size:14px;height:28px;border-radius:12px;background:var(--chip-muted);color:var(--chip-text);white-space:nowrap;}
+    .cat-list-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid rgba(180,180,180,.11);}
+    .cat-chip{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;padding:5px 8px;font-size:14px;height:28px;border-radius:12px;background:var(--chip-muted);color:var(--chip-text);white-space:nowrap;}
 
     /* 入力フォーム周り */
     .flex-split{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
@@ -899,7 +900,7 @@
     const newCat=document.getElementById('newCat'),addCatBtn=document.getElementById('addCat'),catList=document.getElementById('catList'),resetData=document.getElementById('resetData');
     function renderCats(){
       catList.innerHTML=categories.map((c,i)=>
-        `<div class="cat-list-row" style="display:flex;align-items:center;gap:6px;padding:7px 0 7px 4px;border-bottom:1px solid rgba(180,180,180,.11);">
+        `<div class="cat-list-row">
           <span class="cat-chip" data-edit="${i}">${c}</span>
           <button class="m-item cat-btn" data-up="${i}">↑</button>
           <button class="m-item cat-btn" data-down="${i}">↓</button>
