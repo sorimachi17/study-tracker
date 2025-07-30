@@ -199,7 +199,10 @@
     .minutes-block{flex:0 0 140px;}
     .date-block{flex:1;min-width:160px;}
     .form-row-flex{display:flex;gap:12px;align-items:flex-end;margin-bottom:0;flex-wrap:wrap;}
-    @media (max-width:600px){.form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}}
+    @media (max-width:600px){
+      .form-row-flex{flex-direction:column;align-items:stretch;gap:4px;}
+      .minutes-block{flex:1 1 0;}
+    }
     .time-input-row{display:flex;gap:8px;align-items:center;margin-top:0;margin-bottom:8px;}
     .time-fields{display:flex;gap:8px;flex:1 1 0;min-width:0;align-items:center;}
 
