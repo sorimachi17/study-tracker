@@ -345,9 +345,8 @@
           <div class="row" style="margin-top:8px">
             <div><label>カテゴリ</label><select id="goalCategory"></select></div>
           </div>
-          <div style="display:flex;gap:14px;justify-content:space-between;margin-top:14px;margin-bottom:18px;">
+          <div style="display:flex;gap:14px;margin-top:14px;margin-bottom:18px;">
             <button class="m-item primary" type="submit">保存</button>
-            <button class="m-item" type="button" id="goalDeleteBtn">削除</button>
           </div>
         </form>
         <div id="activeGoalList" class="goal-list-card" style="margin-top:10px"></div>
@@ -847,7 +846,6 @@
           goalStart=document.getElementById('goalStart'),
           goalEnd=document.getElementById('goalEnd'),
           goalHours=document.getElementById('goalHours'),
-          goalDeleteBtn=document.getElementById('goalDeleteBtn'),
           goalHistory=document.getElementById('goalHistory'),
           activeGoalList=document.getElementById('activeGoalList');
 
@@ -906,13 +904,6 @@
       save(KEYS.goals,goals);toast('保存');
       const acts=activeGoals();
       if(acts.length) summaryGoalIndex=acts.length-1;
-      renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
-    });
-    goalDeleteBtn.addEventListener('click',()=>{
-      if(!goals.length) return;
-      if(!confirm('最新の目標を削除しますか？'))return;
-      goals.pop();
-      save(KEYS.goals,goals);
       renderGoal();renderActiveGoals();renderGoalHistory();renderSummary();renderWeek();
     });
 
