@@ -129,8 +129,9 @@
     .calendar-grid{display:grid;gap:4px;grid-template-columns:repeat(7, minmax(0,1fr));}
     #dowRow{display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:4px;margin-bottom:4px;}
     .dow{font-size:12px;color:var(--muted);text-align:center}
-    .day{aspect-ratio:1/1;border-radius:6px;padding:4px;display:flex;flex-direction:column;justify-content:space-between;background:var(--lvl0);cursor:pointer;}
-    .day .num,.day .mins{line-height:1}
+    .day{aspect-ratio:1/1;border-radius:6px;padding:4px;display:flex;flex-direction:column;justify-content:space-between;background:var(--lvl0);cursor:pointer;overflow:hidden;}
+    .day .num{line-height:1;font-size:12px}
+    .day .mins{line-height:1;font-size:11px;white-space:nowrap;overflow:hidden}
     .lvl0{background:var(--lvl0)} .lvl1{background:var(--lvl1)} .lvl2{background:var(--lvl2)} .lvl3{background:var(--lvl3)} .lvl4{background:var(--lvl4)}
     .day.today{outline:2px solid var(--accent);outline-offset:0}
     @supports not (aspect-ratio: 1 / 1){
