@@ -50,6 +50,7 @@
     /* PC向けタブ */
     .tabs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
     @media (max-width:640px){.tabs{display:none}}
+    @media (min-width:641px){#menuBtn,#menuPanel,#menuBackdrop{display:none!important}}
     .tab-btn{
       border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);
       padding:7px 13px;border-radius:999px;font-size:13px;white-space:nowrap;
