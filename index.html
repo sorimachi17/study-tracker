@@ -8,6 +8,7 @@
     :root{
       --bg:#0f1115;--card:#171a21;--text:#dfe6ee;--muted:#98a2b3;
       --accent:#4ea46e;--accent-2:#2c7a4a;--danger:#f25f5c;
+      --highlight:#4c6fff;
       --chip:#232834;--chip-muted:#545e70;--chip-text:#fff;
       --lvl0:#2a2e36;--lvl1:#284e32;--lvl2:#2f6e3e;--lvl3:#2f8e4a;--lvl4:#31a65a;
       --goalhist-bg:#16191e;
@@ -16,6 +17,7 @@
       :root{
         --bg:#f7f8fb;--card:#fff;--text:#111;--muted:#667085;
         --accent:#2ea043;--accent-2:#1f7a32;--danger:#f25f5c;
+        --highlight:#3b6df8;
         --chip:#e6f4ea;--chip-muted:#c2c7cf;--chip-text:#1a2a15;
         --lvl0:#ebedf0;--lvl1:#c6e48b;--lvl2:#7bc96f;--lvl3:#239a3b;--lvl4:#196127;
         --goalhist-bg:#f4f5f8;
@@ -134,7 +136,7 @@
     .day .num{line-height:1;font-size:12px}
     .day .mins{line-height:1;font-size:11px;white-space:nowrap;overflow:hidden}
     .lvl0{background:var(--lvl0)} .lvl1{background:var(--lvl1)} .lvl2{background:var(--lvl2)} .lvl3{background:var(--lvl3)} .lvl4{background:var(--lvl4)}
-    .day.today{outline:2px solid var(--accent);outline-offset:0}
+    .day.selected{outline:2px solid var(--highlight);outline-offset:0}
     @supports not (aspect-ratio: 1 / 1){
       .day{position:relative}
       .day::before{content:"";display:block;padding-top:100%}
@@ -702,8 +704,10 @@
       const firstDow=(new Date(y,m,1).getDay()+6)%7;const blanks=Array.from({length:firstDow},()=>'<div></div>').join('');
       monthGrid.innerHTML=blanks+Array.from({length:lastDate},(_,i)=>{
         const d=i+1,key=`${y}-${pad(m+1)}-${pad(d)}`,sum=totals[key]||0;
-        const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));const isToday=key===todayStr();
-        return `<div class="day lvl${level} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?fmt(sum)+'m':''}</div></div>`;
+        const level=sum===0?0:Math.min(4,Math.ceil((sum/(monthMax||1))*4));
+        const isToday=key===todayStr();
+        const selected=key===activeDayDetail;
+        return `<div class="day lvl${level} ${selected?'selected':''} ${isToday?'today':''}" data-date="${key}"><div class="num">${d}</div><div class="mins">${sum?fmt(sum)+'m':''}</div></div>`;
       }).join('');
       dayDetails.innerHTML='';
       if(activeDayDetail) renderDayDetails(activeDayDetail);
@@ -729,9 +733,10 @@
     }
 
     monthGrid.addEventListener('click',e=>{
-      const d=e.target.closest('.day')?.dataset?.date;if(!d)return;
+      const d=e.target.closest('.day')?.dataset?.date; if(!d) return;
       document.getElementById('date').value = d;
-      renderDayDetails(d);
+      activeDayDetail = d;
+      renderMonth();
     });
 
     dayDetails.addEventListener('click',e=>{
@@ -961,13 +966,13 @@
       renderGoal();renderActiveGoals();renderGoalHistory();renderCats();
       setCalendarView(calendarViewSel.value);
     }
-    function init(){
-      const today = todayStr();
-      document.getElementById('date').value = today;
-      estimateTimes();
-      renderAll();
-      renderDayDetails(today);
-    }
+  function init(){
+    const today = todayStr();
+    document.getElementById('date').value = today;
+    activeDayDetail = today;
+    estimateTimes();
+    renderAll();
+  }
     init();
   })();
   </script>
