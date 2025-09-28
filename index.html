@@ -249,7 +249,8 @@
       <button class="tab-btn" type="button" data-tab="goal">目標</button>
       <button class="tab-btn" type="button" data-tab="cats">カテゴリ</button>
       <!-- 外部ページ例：<a class="tab-btn" href="/another.html">別ページ</a> -->
-      <button class="tab-btn right" type="button" id="exportBtn" title="JSONで書き出し">エクスポート</button>
+      <button class="tab-btn right" type="button" id="exportCsvBtn" title="CSVで書き出し">CSV出力</button>
+      <button class="tab-btn" type="button" id="exportBtn" title="JSONで書き出し">JSONエクスポート</button>
       <button class="tab-btn" type="button" id="importBtn" title="JSONを読み込み">インポート</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
     </div>
@@ -262,7 +263,8 @@
     <button class="m-item" type="button" data-tab="goal">目標</button>
     <button class="m-item" type="button" data-tab="cats">カテゴリ</button>
     <!-- 外部ページ例：<a class="m-item" href="/goals.html">別ページ（例）</a> -->
-    <button class="m-item" type="button" id="mExport">エクスポート</button>
+    <button class="m-item" type="button" id="mExportCsv">CSV出力</button>
+    <button class="m-item" type="button" id="mExport">JSONエクスポート</button>
     <button class="m-item" type="button" id="mImport">インポート</button>
   </nav>
 
@@ -459,8 +461,10 @@
 
     // ----- Export/Import（PC/モバイル）
     const exportBtn = document.getElementById('exportBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
     const importBtn = document.getElementById('importBtn');
     const importFile = document.getElementById('importFile');
+    const mExportCsv = document.getElementById('mExportCsv');
     const mExport = document.getElementById('mExport');
     const mImport = document.getElementById('mImport');
 
@@ -471,9 +475,35 @@
       a.download=`study_backup_${Date.now()}.json`;a.click();URL.revokeObjectURL(a.href);
       toast('エクスポートしました');
     }
+    function entriesToCsv(){
+      const headers=['id','date','category','minutes','startTime','endTime','createdAt'];
+      const escape=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const rows=entries.map(e=>{
+        return headers.map(key=>{
+          if(key==='createdAt'){
+            return escape(e.createdAt?new Date(e.createdAt).toISOString():'');
+          }
+          return escape(e[key]);
+        }).join(',');
+      });
+      return [headers.join(','),...rows].join('\r\n');
+    }
+    function doExportCsv(){
+      const csv=entriesToCsv();
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`study_log_${Date.now()}.csv`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      toast('CSVを出力しました');
+    }
     function askImport(){ importFile.click(); }
     exportBtn.addEventListener('click',doExport);
+    exportCsvBtn.addEventListener('click',doExportCsv);
     mExport.addEventListener('click',()=>{ doExport(); closeMenu(); });
+    mExportCsv.addEventListener('click',()=>{ doExportCsv(); closeMenu(); });
     importBtn.addEventListener('click',askImport);
     mImport.addEventListener('click',()=>{ askImport(); closeMenu(); });
     importFile.addEventListener('change',async()=>{
