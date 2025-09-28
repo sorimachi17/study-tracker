@@ -123,6 +123,15 @@
     .summary-kpi{font-size:26px;font-weight:700}
     .summary-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
     @media (max-width:600px){.summary-list{grid-template-columns:1fr}}
+    .summary-range{background:var(--lvl0);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}
+    .summary-range-header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+    .summary-range-caption{font-size:12px;color:var(--muted)}
+    .summary-range-value{font-size:16px;font-weight:600}
+    .summary-range-select{width:auto;padding:4px 10px;height:32px;font-size:13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0e1016;color:var(--text)}
+    @media (prefers-color-scheme: light){
+      .summary-range-select{background:#fff;color:#111;border-color:#e5e7eb}
+      .summary-range{background:#f3f4f6}
+    }
     .summary-progress-bar{width:100%;height:11px;border-radius:7px;background:var(--lvl0);margin:10px 0 4px;overflow:hidden}
     .summary-progress-bar-inner{height:100%;border-radius:7px;background:var(--accent);transition:.25s;width:0}
 
@@ -414,8 +423,11 @@
     const latestGoal = ()=> goals.length ? goals[goals.length-1] : null;
     const startOfWeek = d => { const t=new Date(d); const diff=(t.getDay()+6)%7; t.setDate(t.getDate()-diff); t.setHours(0,0,0,0); return t; };
     const fmtWeekLabel = start => { const end=new Date(start); end.setDate(start.getDate()+6); return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}〜${end.getMonth()+1}/${end.getDate()}`; };
+    const fmtMonthOption = ym => { const [y,m]=ym.split('-'); return `${y}/${m}`; };
     let currentWeekStart=startOfWeek(new Date());
     let summaryGoalIndex=0;
+    let summarySelectedWeek=null;
+    let summarySelectedMonth=null;
     const activeGoals=()=>{
       const today=new Date();today.setHours(0,0,0,0);
       return goals.filter(g=>parseDateStr(g.start)<=today && parseDateStr(g.end)>=today);
@@ -577,16 +589,40 @@
 
       const today = new Date(); today.setHours(0,0,0,0);
       const thisWeekStart = startOfWeek(today);
-      const thisWeekEnd = new Date(thisWeekStart); thisWeekEnd.setDate(thisWeekEnd.getDate()+6); thisWeekEnd.setHours(23,59,59,999);
       const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      const thisMonthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0); thisMonthEnd.setHours(23,59,59,999);
       const withinRange = (d,start,end)=>{
         if(start && d<start) return false;
         if(end && d>end) return false;
         return true;
       };
-      const weekMin = filteredEntries.filter(e=>withinRange(e.parsedDate,thisWeekStart,thisWeekEnd)).reduce((a,b)=>a+b.minutes,0);
-      const monthMin = filteredEntries.filter(e=>withinRange(e.parsedDate,thisMonthStart,thisMonthEnd)).reduce((a,b)=>a+b.minutes,0);
+
+      const monthSet = new Set(filteredEntries.map(e=>`${e.parsedDate.getFullYear()}-${pad(e.parsedDate.getMonth()+1)}`));
+      const thisMonthKey = `${thisMonthStart.getFullYear()}-${pad(thisMonthStart.getMonth()+1)}`;
+      monthSet.add(thisMonthKey);
+      const months = Array.from(monthSet).sort();
+      if(!summarySelectedMonth || !months.includes(summarySelectedMonth)){
+        summarySelectedMonth = months[months.length-1] || thisMonthKey;
+      }
+      const [selYearStr, selMonthStr] = (summarySelectedMonth || thisMonthKey).split('-');
+      const selYear = Number(selYearStr || today.getFullYear());
+      const selMonth = Number(selMonthStr || (today.getMonth()+1));
+      const selectedMonthStart = new Date(selYear, selMonth-1, 1);
+      const selectedMonthEnd = new Date(selYear, selMonth, 0); selectedMonthEnd.setHours(23,59,59,999);
+      const selectedMonthMin = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedMonthStart,selectedMonthEnd)).reduce((a,b)=>a+b.minutes,0);
+      const selectedMonthLabel = fmtDateLabel(selectedMonthStart);
+      const monthOptions = months.map(ym=>`<option value="${ym}" ${ym===summarySelectedMonth?'selected':''}>${fmtMonthOption(ym)}</option>`).join('');
+
+      const weekSet = new Set(filteredEntries.map(e=>dateToStr(startOfWeek(e.parsedDate))));
+      weekSet.add(dateToStr(thisWeekStart));
+      const weeks = Array.from(weekSet).sort();
+      if(!summarySelectedWeek || !weeks.includes(summarySelectedWeek)){
+        summarySelectedWeek = weeks[weeks.length-1] || dateToStr(thisWeekStart);
+      }
+      const selectedWeekStart = parseDateStr(summarySelectedWeek);
+      const selectedWeekEnd = new Date(selectedWeekStart); selectedWeekEnd.setDate(selectedWeekEnd.getDate()+6); selectedWeekEnd.setHours(23,59,59,999);
+      const selectedWeekMin = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedWeekStart,selectedWeekEnd)).reduce((a,b)=>a+b.minutes,0);
+      const selectedWeekLabel = fmtWeekLabel(selectedWeekStart);
+      const weekOptions = weeks.map(ws=>{ const d=parseDateStr(ws); return `<option value="${ws}" ${ws===summarySelectedWeek?'selected':''}>${fmtWeekLabel(d)}</option>`; }).join('');
 
       let days = 1, goalPeriod = "";
       if(goal && goal.start && goal.end){
@@ -611,12 +647,40 @@
            <div>目標到達予測：${predict||'—'}</div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
-           <div>今週：<b>${fmt(weekMin/60,1)}</b>h（${fmt(weekMin)}m）</div>
-           <div>今月：<b>${fmt(monthMin/60,1)}</b>h（${fmt(monthMin)}m）</div>
+           <div class="summary-range">
+             <div class="summary-range-header">
+               <span>週合計</span>
+               <select id="summaryWeekSelect" class="summary-range-select">${weekOptions}</select>
+             </div>
+             <div class="summary-range-caption">${selectedWeekLabel}</div>
+             <div class="summary-range-value"><b>${fmt(selectedWeekMin/60,1)}</b>h（${fmt(selectedWeekMin)}m）</div>
+           </div>
+           <div class="summary-range">
+             <div class="summary-range-header">
+               <span>月合計</span>
+               <select id="summaryMonthSelect" class="summary-range-select">${monthOptions}</select>
+             </div>
+             <div class="summary-range-caption">${selectedMonthLabel}</div>
+             <div class="summary-range-value"><b>${fmt(selectedMonthMin/60,1)}</b>h（${fmt(selectedMonthMin)}m）</div>
+           </div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
            ${Object.entries(catTotals).map(([c,v])=>`<div>${c}: <b>${fmt(v/60,1)}</b>h</div>`).join('')}
          </div>`;
+      const weekSelectEl=document.getElementById('summaryWeekSelect');
+      if(weekSelectEl){
+        weekSelectEl.addEventListener('change',()=>{
+          summarySelectedWeek=weekSelectEl.value;
+          renderSummary();
+        });
+      }
+      const monthSelectEl=document.getElementById('summaryMonthSelect');
+      if(monthSelectEl){
+        monthSelectEl.addEventListener('change',()=>{
+          summarySelectedMonth=monthSelectEl.value;
+          renderSummary();
+        });
+      }
       const bar = document.getElementById('mainProgressBar');
       bar.style.width = (goal?Math.min(100, Math.round((totalMin / Math.max(1,goal.targetMin))*100)):0) + '%';
     }
