@@ -558,24 +558,35 @@
       tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
       const goal=goalsAct[summaryGoalIndex];
 
-      let totalMin = entries.reduce((a,b)=>a+b.minutes,0);
-      if(goal && goal.start && goal.end){
-        const s=parseDateStr(goal.start),e=parseDateStr(goal.end);
-        totalMin = entries.filter(x=>{
-          const d=parseDateStr(x.date);
-          return d>=s&&d<=e && (goal.category==='all' || !goal.category || x.category===goal.category);
-        }).reduce((a,b)=>a+b.minutes,0);
-      }
-      const totalH = fmt(totalMin/60,1);
+      const goalStart = goal?.start ? parseDateStr(goal.start) : null;
+      const goalEnd = goal?.end ? parseDateStr(goal.end) : null;
+      const goalCat = goal?.category && goal.category !== 'all' ? goal.category : null;
 
-      const rangeEntries = entries.filter(x=>{
-        if(goal && goal.start && goal.end){
-          const d=parseDateStr(x.date);
-          if(d<parseDateStr(goal.start)||d>parseDateStr(goal.end)) return false;
-        }
+      const enrichedEntries = entries.map(e=>({ ...e, parsedDate: parseDateStr(e.date) }));
+      const filteredEntries = enrichedEntries.filter(e=>{
+        if(goalStart && e.parsedDate < goalStart) return false;
+        if(goalEnd && e.parsedDate > goalEnd) return false;
+        if(goalCat && e.category !== goalCat) return false;
         return true;
       });
-      const catTotals={}; rangeEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
+
+      const totalMin = filteredEntries.reduce((a,b)=>a+b.minutes,0);
+      const totalH = fmt(totalMin/60,1);
+
+      const catTotals={}; filteredEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const thisWeekStart = startOfWeek(today);
+      const thisWeekEnd = new Date(thisWeekStart); thisWeekEnd.setDate(thisWeekEnd.getDate()+6); thisWeekEnd.setHours(23,59,59,999);
+      const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const thisMonthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0); thisMonthEnd.setHours(23,59,59,999);
+      const withinRange = (d,start,end)=>{
+        if(start && d<start) return false;
+        if(end && d>end) return false;
+        return true;
+      };
+      const weekMin = filteredEntries.filter(e=>withinRange(e.parsedDate,thisWeekStart,thisWeekEnd)).reduce((a,b)=>a+b.minutes,0);
+      const monthMin = filteredEntries.filter(e=>withinRange(e.parsedDate,thisMonthStart,thisMonthEnd)).reduce((a,b)=>a+b.minutes,0);
 
       let days = 1, goalPeriod = "";
       if(goal && goal.start && goal.end){
@@ -598,6 +609,10 @@
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
            <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
            <div>目標到達予測：${predict||'—'}</div>
+         </div>
+         <div class="summary-list" style="margin-top:4px;">
+           <div>今週：<b>${fmt(weekMin/60,1)}</b>h（${fmt(weekMin)}m）</div>
+           <div>今月：<b>${fmt(monthMin/60,1)}</b>h（${fmt(monthMin)}m）</div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
            ${Object.entries(catTotals).map(([c,v])=>`<div>${c}: <b>${fmt(v/60,1)}</b>h</div>`).join('')}
