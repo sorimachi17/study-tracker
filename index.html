@@ -589,6 +589,30 @@
       const catTotals={}; filteredEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
 
       const today = new Date(); today.setHours(0,0,0,0);
+      const studyDaySet = new Set(entries.filter(e=>e.minutes>0).map(e=>e.date));
+      let currentStreak = 0;
+      const cursor = new Date(today);
+      while(studyDaySet.has(dateToStr(cursor))){
+        currentStreak += 1;
+        cursor.setDate(cursor.getDate()-1);
+      }
+      let longestStreak = 0;
+      if(studyDaySet.size){
+        const orderedDays = Array.from(studyDaySet).map(parseDateStr).sort((a,b)=>a-b);
+        let run = 0;
+        let prev = null;
+        const DAY_MS = 86400000;
+        orderedDays.forEach(d=>{
+          if(prev && (d - prev === DAY_MS)){
+            run += 1;
+          }else{
+            run = 1;
+          }
+          if(run>longestStreak) longestStreak = run;
+          prev = d;
+        });
+      }
+
       const thisWeekStart = startOfWeek(today);
       const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const withinRange = (d,start,end)=>{
@@ -650,6 +674,8 @@
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
            <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
            <div>目標到達予測：${predict||'—'}</div>
+           <div>現在の連続勉強日数：<span style="font-weight:600">${fmt(currentStreak)}</span>日</div>
+           <div>最長連続勉強日数：<span style="font-weight:600">${fmt(longestStreak)}</span>日</div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
            <div class="summary-range">
