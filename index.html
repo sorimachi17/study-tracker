@@ -135,6 +135,21 @@
     }
     .summary-progress-bar{width:100%;height:11px;border-radius:7px;background:var(--lvl0);margin:10px 0 4px;overflow:hidden}
     .summary-progress-bar-inner{height:100%;border-radius:7px;background:var(--accent);transition:.25s;width:0}
+    .summary-chart-card{background:var(--lvl0);border-radius:12px;padding:12px 10px;margin:4px 0 8px;}
+    .summary-chart-header{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px;}
+    .summary-chart-header b{font-size:16px;color:var(--text);}
+    .summary-chart-svg{width:100%;height:160px;}
+    .summary-chart-line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
+    .summary-chart-area{fill:rgba(78,164,110,.18);}
+    .summary-chart-dot{fill:var(--accent);}
+    .summary-chart-grid line{stroke:rgba(255,255,255,.08);stroke-width:1;}
+    .summary-chart-grid text{fill:var(--muted);font-size:10px;}
+    .summary-chart-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;}
+    @media (prefers-color-scheme: light){
+      .summary-chart-card{background:#f3f4f6;}
+      .summary-chart-area{fill:rgba(46,160,67,.18);}
+      .summary-chart-grid line{stroke:rgba(17,24,39,.08);}
+    }
 
     /* カレンダー */
     .calendar-head{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:8px;justify-content:center;}
@@ -437,7 +452,78 @@
       const today=new Date();today.setHours(0,0,0,0);
       return goals.filter(g=>parseDateStr(g.end)<today);
     };
-    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});    
+    const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
+    const fmtAxisDate = d => `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+    const buildCumulativeSeries = list => {
+      if(!list.length) return null;
+      const sorted=list.slice().sort((a,b)=>a.parsedDate-b.parsedDate);
+      const totals=new Map();
+      sorted.forEach(e=>{
+        const key=dateToStr(e.parsedDate);
+        totals.set(key,(totals.get(key)||0)+e.minutes);
+      });
+      const start=new Date(sorted[0].parsedDate);
+      const end=new Date(sorted[sorted.length-1].parsedDate);
+      start.setHours(0,0,0,0);
+      end.setHours(0,0,0,0);
+      const DAY_MS=86400000;
+      const points=[];
+      let running=0;
+      for(let current=new Date(start); current<=end; current=new Date(current.getTime()+DAY_MS)){
+        const key=dateToStr(current);
+        if(totals.has(key)) running+=totals.get(key);
+        points.push({date:new Date(current), totalMin:running});
+      }
+      return {points,start,end,totalMin:running,maxMin:points.reduce((m,p)=>Math.max(m,p.totalMin),0)};
+    };
+    const cumulativeChartHTML = series => {
+      if(!series || !series.points.length){
+        return '<div class="summary-chart-card"><div class="muted">記録があると累計グラフを表示します。</div></div>';
+      }
+      const width=360,height=180;
+      const padLeft=44,padRight=16,padTop=14,padBottom=32;
+      const innerWidth=width-padLeft-padRight;
+      const innerHeight=height-padTop-padBottom;
+      const maxVal=series.maxMin||0;
+      const denom=Math.max(1,series.points.length-1);
+      const linePoints=series.points.map((pt,idx)=>{
+        const x=padLeft+(innerWidth*(idx/denom));
+        const ratio=maxVal?pt.totalMin/maxVal:0;
+        const y=padTop+innerHeight-(ratio*innerHeight);
+        return {...pt,x,y};
+      });
+      const linePath=linePoints.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+      const areaPath=`M ${padLeft} ${padTop+innerHeight} `+linePoints.map(p=>`L ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ')+` L ${padLeft+innerWidth} ${padTop+innerHeight} Z`;
+      const circles=linePoints.map(p=>`<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.6" class="summary-chart-dot"></circle>`).join('');
+      const tickCount=4;
+      let grid='';
+      if(maxVal===0){
+        const y=padTop+innerHeight;
+        grid=`<g class="summary-chart-grid"><line x1="${padLeft}" x2="${padLeft+innerWidth}" y1="${y.toFixed(2)}" y2="${y.toFixed(2)}"></line><text x="${padLeft-6}" y="${(y+4).toFixed(2)}" text-anchor="end">0.0h</text></g>`;
+      }else if(tickCount>0){
+        const ticks=[];
+        for(let i=0;i<=tickCount;i++){
+          const ratio=i/tickCount;
+          const value=maxVal*ratio;
+          const y=padTop+innerHeight-(ratio*innerHeight);
+          ticks.push(`<line x1="${padLeft}" x2="${padLeft+innerWidth}" y1="${y.toFixed(2)}" y2="${y.toFixed(2)}"></line>`);
+          ticks.push(`<text x="${padLeft-6}" y="${(y+4).toFixed(2)}" text-anchor="end">${fmt(value/60,1)}h</text>`);
+        }
+        grid=`<g class="summary-chart-grid">${ticks.join('')}</g>`;
+      }
+      const startLabel=fmtAxisDate(series.start);
+      const endLabel=fmtAxisDate(series.end);
+      return `<div class="summary-chart-card">
+        <div class="summary-chart-header"><span>累計勉強時間</span><span><b>${fmt(series.totalMin/60,1)}</b> h</span></div>
+        <svg viewBox="0 0 ${width} ${height}" class="summary-chart-svg" role="img" aria-label="累計勉強時間の推移">
+          ${grid}
+          <path d="${areaPath}" class="summary-chart-area"></path>
+          <path d="${linePath}" class="summary-chart-line" vector-effect="non-scaling-stroke"></path>
+          ${circles}
+        </svg>
+        <div class="summary-chart-axis"><span>${startLabel}</span><span>${endLabel}</span></div>
+      </div>`;
+    };
 
     // ----- メニュー（重ねるオーバーレイ）
     const body = document.body;
@@ -587,6 +673,8 @@
       const totalH = fmt(totalMin/60,1);
 
       const catTotals={}; filteredEntries.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.minutes;});
+      const cumulativeSeries = buildCumulativeSeries(filteredEntries);
+      const chartHtml = cumulativeChartHTML(cumulativeSeries);
 
       const today = new Date(); today.setHours(0,0,0,0);
       const studyDaySet = new Set(entries.filter(e=>e.minutes>0).map(e=>e.date));
@@ -670,6 +758,7 @@
       wrap.innerHTML =
         `<div class="summary-kpi">合計 <span style="font-weight:700">${totalH}</span> h  (${fmt(totalMin)} m)</div>
          <div class="summary-progress-bar"><div class="summary-progress-bar-inner" id="mainProgressBar"></div></div>
+         ${chartHtml}
          <div class="summary-list">
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
            <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
