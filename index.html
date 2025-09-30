@@ -127,6 +127,7 @@
     .summary-range-header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
     .summary-range-caption{font-size:12px;color:var(--muted)}
     .summary-range-value{font-size:16px;font-weight:600}
+    .summary-range-sub{font-size:12px;color:var(--muted)}
     .summary-range-select{width:auto;padding:4px 10px;height:32px;font-size:13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0e1016;color:var(--text)}
     @media (prefers-color-scheme: light){
       .summary-range-select{background:#fff;color:#111;border-color:#e5e7eb}
@@ -608,7 +609,9 @@
       const selMonth = Number(selMonthStr || (today.getMonth()+1));
       const selectedMonthStart = new Date(selYear, selMonth-1, 1);
       const selectedMonthEnd = new Date(selYear, selMonth, 0); selectedMonthEnd.setHours(23,59,59,999);
-      const selectedMonthMin = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedMonthStart,selectedMonthEnd)).reduce((a,b)=>a+b.minutes,0);
+      const selectedMonthEntries = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedMonthStart,selectedMonthEnd));
+      const selectedMonthMin = selectedMonthEntries.reduce((a,b)=>a+b.minutes,0);
+      const selectedMonthDays = new Set(selectedMonthEntries.filter(e=>e.minutes>0).map(e=>e.date)).size;
       const selectedMonthLabel = fmtDateLabel(selectedMonthStart);
       const monthOptions = months.map(ym=>`<option value="${ym}" ${ym===summarySelectedMonth?'selected':''}>${fmtMonthOption(ym)}</option>`).join('');
 
@@ -620,7 +623,9 @@
       }
       const selectedWeekStart = parseDateStr(summarySelectedWeek);
       const selectedWeekEnd = new Date(selectedWeekStart); selectedWeekEnd.setDate(selectedWeekEnd.getDate()+6); selectedWeekEnd.setHours(23,59,59,999);
-      const selectedWeekMin = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedWeekStart,selectedWeekEnd)).reduce((a,b)=>a+b.minutes,0);
+      const selectedWeekEntries = filteredEntries.filter(e=>withinRange(e.parsedDate,selectedWeekStart,selectedWeekEnd));
+      const selectedWeekMin = selectedWeekEntries.reduce((a,b)=>a+b.minutes,0);
+      const selectedWeekDays = new Set(selectedWeekEntries.filter(e=>e.minutes>0).map(e=>e.date)).size;
       const selectedWeekLabel = fmtWeekLabel(selectedWeekStart);
       const weekOptions = weeks.map(ws=>{ const d=parseDateStr(ws); return `<option value="${ws}" ${ws===summarySelectedWeek?'selected':''}>${fmtWeekLabel(d)}</option>`; }).join('');
 
@@ -654,6 +659,7 @@
              </div>
              <div class="summary-range-caption">${selectedWeekLabel}</div>
              <div class="summary-range-value"><b>${fmt(selectedWeekMin/60,1)}</b>h（${fmt(selectedWeekMin)}m）</div>
+             <div class="summary-range-sub">勉強日数：<b>${fmt(selectedWeekDays)}</b>日</div>
            </div>
            <div class="summary-range">
              <div class="summary-range-header">
@@ -662,6 +668,7 @@
              </div>
              <div class="summary-range-caption">${selectedMonthLabel}</div>
              <div class="summary-range-value"><b>${fmt(selectedMonthMin/60,1)}</b>h（${fmt(selectedMonthMin)}m）</div>
+             <div class="summary-range-sub">勉強日数：<b>${fmt(selectedMonthDays)}</b>日</div>
            </div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
