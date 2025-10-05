@@ -457,6 +457,10 @@
       return goals.filter(g=>parseDateStr(g.end)<today);
     };
     const fmt=(n,d)=>Number(n).toLocaleString('en-US',d!==undefined?{minimumFractionDigits:d,maximumFractionDigits:d}:{});
+    const fmtHourMinute=(minutes,hDigits=1)=>{
+      const min = Number.isFinite(minutes)?minutes:0;
+      return `<b>${fmt(min/60,hDigits)}</b>h（${fmt(Math.round(min))}m）`;
+    };
     const fmtAxisDate = d => `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
     const buildCumulativeSeries = list => {
       if(!list.length) return null;
@@ -800,7 +804,7 @@
       const selectedMonthAvgMin=(selectedMonthStats&&selectedMonthStats.spanDays>0)?selectedMonthStats.avgMin:0;
       const monthAvgList=monthAvgData.filter(d=>d.spanDays>0);
       const monthAvgListHtml=monthAvgList.length
-        ? monthAvgList.map(d=>`<div class="summary-month-avg-item"><span>${d.label}</span><span><b>${fmt(d.avgMin/60,1)}</b>h</span></div>`).join('')
+        ? monthAvgList.map(d=>`<div class="summary-month-avg-item"><span>${d.label}</span><span>${fmtHourMinute(d.avgMin,1)}</span></div>`).join('')
         : '<div class="muted">対象期間の記録がありません。</div>';
 
       const weekSet = new Set(filteredEntries.map(e=>dateToStr(startOfWeek(e.parsedDate))));
@@ -838,7 +842,7 @@
          <div class="summary-list">
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
            <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
-           <div>記録開始からの1日平均：<b>${fmt(overallAvgDailyMin/60,1)}</b>h</div>
+           <div>記録開始からの1日平均：${fmtHourMinute(overallAvgDailyMin,1)}</div>
            <div>目標到達予測：${predict||'—'}</div>
            <div>現在の連続勉強日数：<span style="font-weight:600">${fmt(currentStreak)}</span>日</div>
            <div>最長連続勉強日数：<span style="font-weight:600">${fmt(longestStreak)}</span>日${longestStreakPeriod}</div>
@@ -861,7 +865,7 @@
              <div class="summary-range-caption">${selectedMonthLabel}</div>
              <div class="summary-range-value"><b>${fmt(selectedMonthMin/60,1)}</b>h（${fmt(selectedMonthMin)}m）</div>
              <div class="summary-range-sub">勉強日数：<b>${fmt(selectedMonthDays)}</b>日</div>
-             <div class="summary-range-sub">1日平均：<b>${fmt(selectedMonthAvgMin/60,1)}</b>h</div>
+             <div class="summary-range-sub">1日平均：${fmtHourMinute(selectedMonthAvgMin,1)}</div>
            </div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
