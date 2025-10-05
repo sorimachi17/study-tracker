@@ -128,6 +128,9 @@
     .summary-range-caption{font-size:12px;color:var(--muted)}
     .summary-range-value{font-size:16px;font-weight:600}
     .summary-range-sub{font-size:12px;color:var(--muted)}
+    .summary-month-avg-list{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-top:4px}
+    .summary-month-avg-item{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .summary-month-avg-item span:first-child{color:var(--muted)}
     .summary-range-select{width:auto;padding:4px 10px;height:32px;font-size:13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0e1016;color:var(--text)}
     @media (prefers-color-scheme: light){
       .summary-range-select{background:#fff;color:#111;border-color:#e5e7eb}
@@ -428,6 +431,7 @@
     const fmtDateLabel = d => `${d.getFullYear()}年${d.getMonth()+1}月`;
     const parseDateStr = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d,0,0,0,0); };
     const dateToStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const DAY_MS = 86400000;
     const toast = msg => { const t=document.getElementById('toast'); if(!t) return; t.textContent=msg||'保存しました'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); };
     const load = (k,fallback)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v??fallback }catch(e){ return fallback } };
     const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -657,6 +661,8 @@
       tabWrap.innerHTML=goalsAct.map((g,i)=>`<button class="tab-btn ${i===summaryGoalIndex?'active':''}" data-selgoal="${i}">${g.category&&g.category!=='all'?g.category:'総合'}</button>`).join('');
       const goal=goalsAct[summaryGoalIndex];
 
+      const toStartOfDay = date => { const d=new Date(date); d.setHours(0,0,0,0); return d; };
+
       const goalStart = goal?.start ? parseDateStr(goal.start) : null;
       const goalEnd = goal?.end ? parseDateStr(goal.end) : null;
       const goalCat = goal?.category && goal.category !== 'all' ? goal.category : null;
@@ -669,6 +675,10 @@
         return true;
       });
 
+      const earliestEntry = filteredEntries.length
+        ? filteredEntries.reduce((min,e)=> e.parsedDate < min ? e.parsedDate : min, filteredEntries[0].parsedDate)
+        : null;
+
       const totalMin = filteredEntries.reduce((a,b)=>a+b.minutes,0);
       const totalH = fmt(totalMin/60,1);
 
@@ -676,7 +686,27 @@
       const cumulativeSeries = buildCumulativeSeries(filteredEntries);
       const chartHtml = cumulativeChartHTML(cumulativeSeries);
 
-      const today = new Date(); today.setHours(0,0,0,0);
+      const monthTotals=new Map();
+      filteredEntries.forEach(e=>{
+        const key=`${e.parsedDate.getFullYear()}-${pad(e.parsedDate.getMonth()+1)}`;
+        monthTotals.set(key,(monthTotals.get(key)||0)+e.minutes);
+      });
+
+      const today = toStartOfDay(new Date());
+      const contextEnd = (goalEnd && goalEnd.getTime() < today.getTime()) ? goalEnd : today;
+      const contextStart = goalStart ? goalStart : (earliestEntry ? toStartOfDay(earliestEntry) : today);
+
+      let overallAvgDailyMin = 0;
+      if(filteredEntries.length){
+        const overallStart = toStartOfDay(earliestEntry);
+        let overallEnd = toStartOfDay(contextEnd);
+        if(overallEnd.getTime() < overallStart.getTime()){
+          overallEnd = new Date(overallStart);
+        }
+        const spanDays = Math.max(1, Math.floor((overallEnd - overallStart)/DAY_MS) + 1);
+        overallAvgDailyMin = totalMin / spanDays;
+      }
+
       const studyDaySet = new Set(entries.filter(e=>e.minutes>0).map(e=>e.date));
       let currentStreak = 0;
       const cursor = new Date(today);
@@ -691,7 +721,6 @@
         let run = 0;
         let prev = null;
         let runStart = null;
-        const DAY_MS = 86400000;
         orderedDays.forEach(d=>{
           if(prev && (d - prev === DAY_MS)){
             run += 1;
@@ -735,6 +764,45 @@
       const selectedMonthLabel = fmtDateLabel(selectedMonthStart);
       const monthOptions = months.map(ym=>`<option value="${ym}" ${ym===summarySelectedMonth?'selected':''}>${fmtMonthOption(ym)}</option>`).join('');
 
+      const clampRangeToContext = (startDate,endDate)=>{
+        if(!contextStart || !contextEnd) return null;
+        let start = toStartOfDay(startDate);
+        let end = toStartOfDay(endDate);
+        if(start.getTime() < contextStart.getTime()) start = toStartOfDay(contextStart);
+        if(end.getTime() > contextEnd.getTime()) end = toStartOfDay(contextEnd);
+        if(end.getTime() < start.getTime()) return null;
+        return {start,end};
+      };
+
+      const monthAvgData = months.map(ym=>{
+        const [yStr,mStr]=ym.split('-');
+        const y=Number(yStr);
+        const mIndex=Number(mStr)-1;
+        const monthStart=new Date(y,mIndex,1);
+        const monthEnd=new Date(y,mIndex+1,0);
+        const totalMinForMonth=monthTotals.get(ym)||0;
+        const clamped=clampRangeToContext(monthStart,monthEnd);
+        if(!clamped){
+          return {key:ym,label:fmtMonthOption(ym),avgMin:0,spanDays:0,totalMin:totalMinForMonth};
+        }
+        const spanDays=Math.max(1,Math.floor((clamped.end-clamped.start)/DAY_MS)+1);
+        return {
+          key:ym,
+          label:fmtMonthOption(ym),
+          avgMin:totalMinForMonth/spanDays,
+          spanDays,
+          totalMin:totalMinForMonth
+        };
+      });
+
+      const monthAvgMap=new Map(monthAvgData.map(d=>[d.key,d]));
+      const selectedMonthStats=monthAvgMap.get(summarySelectedMonth);
+      const selectedMonthAvgMin=(selectedMonthStats&&selectedMonthStats.spanDays>0)?selectedMonthStats.avgMin:0;
+      const monthAvgList=monthAvgData.filter(d=>d.spanDays>0);
+      const monthAvgListHtml=monthAvgList.length
+        ? monthAvgList.map(d=>`<div class="summary-month-avg-item"><span>${d.label}</span><span><b>${fmt(d.avgMin/60,1)}</b>h</span></div>`).join('')
+        : '<div class="muted">対象期間の記録がありません。</div>';
+
       const weekSet = new Set(filteredEntries.map(e=>dateToStr(startOfWeek(e.parsedDate))));
       weekSet.add(dateToStr(thisWeekStart));
       const weeks = Array.from(weekSet).sort();
@@ -770,9 +838,10 @@
          <div class="summary-list">
            <div>開始から <span style="font-weight:600">${fmt(days)}</span> 日目${goalPeriod}</div>
            <div>目標：${tgt?fmt(tgt/60,1)+'h':'—'}（達成率${fmt(pct||0)}%）</div>
+           <div>記録開始からの1日平均：<b>${fmt(overallAvgDailyMin/60,1)}</b>h</div>
            <div>目標到達予測：${predict||'—'}</div>
            <div>現在の連続勉強日数：<span style="font-weight:600">${fmt(currentStreak)}</span>日</div>
-          <div>最長連続勉強日数：<span style="font-weight:600">${fmt(longestStreak)}</span>日${longestStreakPeriod}</div>
+           <div>最長連続勉強日数：<span style="font-weight:600">${fmt(longestStreak)}</span>日${longestStreakPeriod}</div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
            <div class="summary-range">
@@ -792,6 +861,13 @@
              <div class="summary-range-caption">${selectedMonthLabel}</div>
              <div class="summary-range-value"><b>${fmt(selectedMonthMin/60,1)}</b>h（${fmt(selectedMonthMin)}m）</div>
              <div class="summary-range-sub">勉強日数：<b>${fmt(selectedMonthDays)}</b>日</div>
+             <div class="summary-range-sub">1日平均：<b>${fmt(selectedMonthAvgMin/60,1)}</b>h</div>
+           </div>
+         </div>
+         <div class="summary-list" style="margin-top:4px;">
+           <div class="summary-range" style="grid-column:1 / -1;">
+             <div class="summary-range-header"><span>月ごとの1日平均</span></div>
+             <div class="summary-month-avg-list">${monthAvgListHtml}</div>
            </div>
          </div>
          <div class="summary-list" style="margin-top:4px;">
