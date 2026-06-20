@@ -100,7 +100,7 @@
   </div>
   <div class="toast" id="toast"></div>
   <script>
-    const STORAGE={entries:'study-tracker.entries.v2',categories:'study-tracker.categories.v2',goal:'study-tracker.weeklyGoalHours.v2'};
+    const STORAGE={entries:'study-tracker.entries.v2',categories:'study-tracker.categories.v2',goal:'study-tracker.weeklyGoalHours.v2',legacyMigrated:'study-tracker.legacyMigrated.v7'};
     const LEGACY_STORAGE={entries:'studyEntries_v7',categories:'studyCategories_v7',goals:'studyGoals_v7'};
     const defaultCategories=['Reading','Listening','Speaking','Writing','Vocabulary','Grammar'];
     migrateLegacyStorage();
@@ -110,8 +110,14 @@
     function load(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}catch{return fallback;}}
     function save(key,value){localStorage.setItem(key,JSON.stringify(value));}
     function migrateLegacyStorage(){
-      const newEntries=load(STORAGE.entries,null),legacyEntries=load(LEGACY_STORAGE.entries,null);
-      if(!Array.isArray(newEntries)&&Array.isArray(legacyEntries)&&legacyEntries.length){save(STORAGE.entries,legacyEntries.map(normalizeLegacyEntry));}
+      const legacyEntries=load(LEGACY_STORAGE.entries,null);
+      if(!localStorage.getItem(STORAGE.legacyMigrated)&&Array.isArray(legacyEntries)&&legacyEntries.length){
+        const currentEntries=load(STORAGE.entries,[]);
+        const existingIds=new Set((Array.isArray(currentEntries)?currentEntries:[]).map(entry=>String(entry.id)));
+        const migratedEntries=legacyEntries.map(normalizeLegacyEntry).filter(entry=>!existingIds.has(String(entry.id)));
+        save(STORAGE.entries,(Array.isArray(currentEntries)?currentEntries:[]).concat(migratedEntries));
+        localStorage.setItem(STORAGE.legacyMigrated,'true');
+      }
       const newCategories=load(STORAGE.categories,null),legacyCategories=load(LEGACY_STORAGE.categories,null);
       if(!Array.isArray(newCategories)&&Array.isArray(legacyCategories)&&legacyCategories.length){save(STORAGE.categories,legacyCategories);}
       if(!localStorage.getItem(STORAGE.goal)){
