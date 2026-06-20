@@ -101,12 +101,33 @@
   <div class="toast" id="toast"></div>
   <script>
     const STORAGE={entries:'study-tracker.entries.v2',categories:'study-tracker.categories.v2',goal:'study-tracker.weeklyGoalHours.v2'};
+    const LEGACY_STORAGE={entries:'studyEntries_v7',categories:'studyCategories_v7',goals:'studyGoals_v7'};
     const defaultCategories=['Reading','Listening','Speaking','Writing','Vocabulary','Grammar'];
+    migrateLegacyStorage();
     let entries=load(STORAGE.entries,[]),categories=load(STORAGE.categories,defaultCategories),weeklyGoalHours=Number(localStorage.getItem(STORAGE.goal)||10),currentMonth=new Date(),selectedDate=todayKey();
     currentMonth.setDate(1);
     const $=id=>document.getElementById(id),fmt=new Intl.DateTimeFormat('ja-JP',{year:'numeric',month:'long'});
     function load(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}catch{return fallback;}}
     function save(key,value){localStorage.setItem(key,JSON.stringify(value));}
+    function migrateLegacyStorage(){
+      const newEntries=load(STORAGE.entries,null),legacyEntries=load(LEGACY_STORAGE.entries,null);
+      if(!Array.isArray(newEntries)&&Array.isArray(legacyEntries)&&legacyEntries.length){save(STORAGE.entries,legacyEntries.map(normalizeLegacyEntry));}
+      const newCategories=load(STORAGE.categories,null),legacyCategories=load(LEGACY_STORAGE.categories,null);
+      if(!Array.isArray(newCategories)&&Array.isArray(legacyCategories)&&legacyCategories.length){save(STORAGE.categories,legacyCategories);}
+      if(!localStorage.getItem(STORAGE.goal)){
+        const legacyGoals=load(LEGACY_STORAGE.goals,null);
+        if(Array.isArray(legacyGoals)&&legacyGoals.length){
+          const today=new Date();today.setHours(0,0,0,0);
+          const active=legacyGoals.find(goal=>parseDate(goal.start)<=today&&parseDate(goal.end)>=today)||legacyGoals[legacyGoals.length-1];
+          if(active&&active.targetMin){localStorage.setItem(STORAGE.goal,String(Math.max(1,Math.round(Number(active.targetMin)/60))));}
+        }
+      }
+    }
+    function normalizeLegacyEntry(entry){
+      const timeNote=entry.startTime&&entry.endTime?entry.startTime+'-'+entry.endTime:'';
+      const fallbackId=String(Date.now())+'-'+Math.random().toString(16).slice(2);
+      return {id:String(entry.id||fallbackId),date:entry.date,category:entry.category||'Uncategorized',minutes:Number(entry.minutes||0),note:entry.note||timeNote,createdAt:Number(entry.createdAt||Date.now())};
+    }
     function pad(n){return String(n).padStart(2,'0');}
     function dateKey(date){return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;}
     function todayKey(){return dateKey(new Date());}
