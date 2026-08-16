@@ -1,0 +1,38 @@
+name: Fix year view colors
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-year-view-colors.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fix year-view heatmap colors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '.mini-dot{aspect-ratio:1;border:0;border-radius:2px;background:var(--heat0);padding:0;min-height:0}'
+          new = '.mini-dot{aspect-ratio:1;border:0;border-radius:2px;padding:0;min-height:0}.mini-dot.lvl0{background:var(--heat0)}.mini-dot.lvl1{background:var(--heat1)}.mini-dot.lvl2{background:var(--heat2)}.mini-dot.lvl3{background:var(--heat3)}.mini-dot.lvl4{background:var(--heat4)}'
+          if old not in s:
+              raise SystemExit('mini-dot css target not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit fix and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/fix-year-view-colors.yml
+          git commit -m "Fix year view study colors"
+          git push origin main
