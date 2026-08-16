@@ -1,0 +1,89 @@
+name: Improve progress stats UI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/improve-progress-stats-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update progress stats
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          def repl(old, new, label):
+              global s
+              if old not in s:
+                  raise SystemExit(f'pattern not found: {label}')
+              s = s.replace(old, new, 1)
+
+          repl(
+              '.milestones{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:18px}.milestone{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:12px;display:flex;flex-direction:column}.milestone span{order:1;color:var(--muted);font-size:11px;font-weight:850}.milestone strong{order:2;font-size:20px;margin-top:5px}.milestone em{order:3;margin-top:4px;color:var(--muted);font-size:10px;font-style:normal}',
+              '.goal-status{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--blueSoft)}.goal-status>div{display:flex;flex-direction:column;gap:3px}.goal-status span{font-size:13px;font-weight:900;color:var(--text)}.goal-status em{font-size:11px;font-weight:750;font-style:normal;color:var(--muted)}.goal-status strong{font-size:22px;line-height:1.1;white-space:nowrap}.milestones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.milestone{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;min-height:104px}.milestone span{order:1;color:var(--text);font-size:12px;font-weight:900;line-height:1.35}.milestone strong{order:2;font-size:22px;line-height:1.15;margin-top:8px;letter-spacing:-.025em}.milestone em{order:3;margin-top:6px;color:var(--muted);font-size:11px;font-weight:700;line-height:1.35;font-style:normal}.milestone.prediction strong{font-size:20px;letter-spacing:-.02em}',
+              'stats css'
+          )
+          repl('.progress-kpis .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}', '.progress-kpis .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}', 'recent grid')
+          repl(
+              '.form-grid,.time-grid,.milestones{grid-template-columns:1fr}.kpi-grid,.year-grid,.month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}',
+              '.form-grid,.time-grid{grid-template-columns:1fr}.milestones{grid-template-columns:repeat(2,minmax(0,1fr))}.milestone.prediction{grid-column:1/-1}.goal-status{align-items:flex-start}.goal-status strong{font-size:19px}.kpi-grid,.year-grid,.month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}',
+              'mobile stats grid'
+          )
+
+          old_block = '<div class="milestones"><div class="milestone"><span id="targetRemainingLabel">目標まで残り</span><strong id="remaining100">100h</strong><em id="remainingDetail">0% 達成</em></div><div class="milestone"><span id="targetPredictionLabel">目標の到達予測</span><strong id="daysTo100">-</strong><em id="paceDetail">-</em></div><div class="milestone"><span>1日の最高学習時間</span><strong id="bestDay">0m</strong><em id="bestDayDate">-</em></div><div class="milestone"><span>1日の平均学習時間</span><strong id="avgDay">0m</strong><em id="avgDayDetail">記録開始から今日まで</em></div><div class="milestone"><span>経過日数</span><strong id="elapsedDays">0日</strong><em id="elapsedDaysDetail">記録開始から</em></div></div><div class="progress-kpis"><div class="section-head"><h3>最近の学習時間</h3><span>すべて合計時間</span></div><div class="kpi-grid"><div class="kpi blue"><span>今日の合計</span><strong id="todayMinutes">0m</strong></div><div class="kpi green"><span>今週の合計</span><strong id="weekMinutes">0h</strong></div><div class="kpi"><span>連続学習日数</span><strong id="streakDays">0日</strong></div></div></div>'
+          new_block = '<div class="goal-status"><div><span id="targetRemainingLabel">目標までの残り学習時間</span><em id="remainingDetail">0% 達成</em></div><strong id="remaining100">100時間</strong></div><div class="milestones"><div class="milestone"><span>経過日数</span><strong id="elapsedDays">0日</strong><em id="elapsedDaysDetail">記録開始から</em></div><div class="milestone"><span>連続学習日数</span><strong id="streakDays">0日</strong><em id="currentStreakDetail">今日までの連続記録</em></div><div class="milestone"><span>最長連続勉強日数</span><strong id="longestStreakDays">0日</strong><em id="longestStreakDetail">これまでの最長</em></div><div class="milestone"><span>1日の平均学習時間</span><strong id="avgDay">0分</strong><em id="avgDayDetail">記録開始から今日まで</em></div><div class="milestone"><span>1日の最高学習時間</span><strong id="bestDay">0分</strong><em id="bestDayDate">-</em></div><div class="milestone prediction"><span id="targetPredictionLabel">到達予測</span><strong id="daysTo100">-</strong><em id="paceDetail">-</em></div></div><div class="progress-kpis"><div class="section-head"><h3>最近の学習時間</h3><span>すべて合計時間</span></div><div class="kpi-grid"><div class="kpi blue"><span>今日の合計</span><strong id="todayMinutes">0m</strong></div><div class="kpi green"><span>今週の合計</span><strong id="weekMinutes">0h</strong></div></div></div>'
+          repl(old_block, new_block, 'progress cards')
+
+          repl(
+              "function minutesLabel(v){v=Math.round(Number(v)||0);if(v<60)return v+'m';const h=Math.floor(v/60),m=v%60;return m?h+'h '+m+'m':h+'h'}function hoursLabel",
+              "function minutesLabel(v){v=Math.round(Number(v)||0);if(v<60)return v+'m';const h=Math.floor(v/60),m=v%60;return m?h+'h '+m+'m':h+'h'}function studyTimeLabel(v){v=Math.round(Number(v)||0);const h=Math.floor(v/60),m=v%60;if(!h)return m+'分';return m?h+'時間'+m+'分':h+'時間'}function hoursLabel",
+              'study time label'
+          )
+          repl(
+              "return{primary:'約'+days+'日後',detail:formatShortDate(dateKey(target))+'ごろ',date:target}",
+              "return{primary:formatShortDate(dateKey(target))+'ごろ',detail:'あと'+days+'日',date:target}",
+              'prediction display'
+          )
+          repl(
+              "function calculateStreak(){let s=0,d=parseDate(todayKey());while(true){const k=dateKey(d);if(sumEntries(e=>e.date===k)<=0)break;s++;d.setDate(d.getDate()-1)}return s}",
+              "function calculateStreak(){let s=0,d=parseDate(todayKey());while(true){const k=dateKey(d);if(sumEntries(e=>e.date===k)<=0)break;s++;d.setDate(d.getDate()-1)}return s}function longestStreakStats(){const days=[...new Set(entries.filter(e=>Number(e.minutes||0)>0&&e.date).map(e=>e.date))].sort();let best=0,run=0,prev=null,runStart='',bestStart='',bestEnd='';days.forEach(k=>{const d=parseDate(k);if(prev&&Math.round((d-prev)/DAY_MS)===1)run++;else{run=1;runStart=k}if(run>best){best=run;bestStart=runStart;bestEnd=k}prev=d});return{days:best,start:bestStart,end:bestEnd}}",
+              'longest streak'
+          )
+          repl(
+              "avgDay=historicalDailyAverage(),first=firstStudyDate(),elapsedDays=",
+              "avgDay=historicalDailyAverage(),first=firstStudyDate(),streak=calculateStreak(),longest=longestStreakStats(),elapsedDays=",
+              'dashboard stats variables'
+          )
+          repl("$('targetRemainingLabel').textContent=targetHours+'時間まで残り'", "$('targetRemainingLabel').textContent='目標（'+targetHours+'時間）までの残り学習時間'", 'remaining label')
+          repl("$('targetPredictionLabel').textContent=targetHours+'時間の到達予測'", "$('targetPredictionLabel').textContent='到達予測'", 'prediction label')
+          repl("$('remaining100').textContent=hoursLabel(remaining,1)", "$('remaining100').textContent=studyTimeLabel(remaining)", 'remaining value')
+          repl("$('bestDay').textContent=minutesLabel(best.minutes)", "$('bestDay').textContent=studyTimeLabel(best.minutes)", 'best day value')
+          repl("$('avgDay').textContent=minutesLabel(avgDay)", "$('avgDay').textContent=studyTimeLabel(avgDay)", 'average value')
+          repl(
+              "$('elapsedDaysDetail').textContent=first?formatShortDate(dateKey(first))+'から':'-';$('todayMinutes').textContent=minutesLabel(todayMin);$('weekMinutes').textContent=minutesLabel(weekMin);$('streakDays').textContent=calculateStreak()+'日'",
+              "$('elapsedDaysDetail').textContent=first?formatShortDate(dateKey(first))+'から':'-';$('streakDays').textContent=streak+'日';$('currentStreakDetail').textContent=streak>0?'今日まで継続':'今日の記録なし';$('longestStreakDays').textContent=longest.days+'日';$('longestStreakDetail').textContent=longest.days?(longest.start===longest.end?formatShortDate(longest.start):formatShortDate(longest.start)+'〜'+formatShortDate(longest.end)):'-';$('todayMinutes').textContent=minutesLabel(todayMin);$('weekMinutes').textContent=minutesLabel(weekMin)",
+              'dashboard render tail'
+          )
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit changes and clean temporary workflows
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/workflows/improve-progress-stats-ui.yml
+          git rm -f .github/workflows/add-delete-all-data.yml .github/workflows/fix-chart-goal-and-date.yml .github/workflows/move-month-total-to-history.yml 2>/dev/null || true
+          git add index.html
+          git commit -m "Improve progress stat cards and prediction display"
+          git push origin main
