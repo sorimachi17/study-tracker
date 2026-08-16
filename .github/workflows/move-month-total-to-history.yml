@@ -1,0 +1,93 @@
+name: Move monthly total into calendar history
+
+on:
+  push:
+    paths:
+      - '.github/workflows/move-month-total-to-history.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update index.html
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text()
+
+          replacements = [
+            (
+              '<div class="kpi amber"><span>今月の合計</span><strong id="monthMinutes">0h</strong></div>',
+              ''
+            ),
+            (
+              '<div class="calendar-title" id="calendarTitle"></div>',
+              '<div class="calendar-heading"><div class="calendar-title" id="calendarTitle"></div><div class="calendar-total" id="calendarMonthTotal"></div></div>'
+            ),
+            (
+              ".calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.calendar-title{font-size:17px;font-weight:900}",
+              ".calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.calendar-heading{display:flex;flex-direction:column;align-items:center;line-height:1.2}.calendar-title{font-size:17px;font-weight:900}.calendar-total{margin-top:4px;color:var(--blue);font-size:12px;font-weight:850}"
+            ),
+            (
+              ".mini-month h4{margin:0 0 4px;font-size:11px}.mini-days",
+              ".mini-month h4{margin:0 0 4px;font-size:11px}.mini-month-head{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:4px}.mini-month-head h4{margin:0}.mini-month-total{color:var(--muted);font-size:10px;font-weight:850}.mini-days"
+            ),
+            (
+              "$('monthMinutes').textContent=minutesLabel(monthMin);",
+              ""
+            ),
+            (
+              "const y=currentMonth.getFullYear(),m=currentMonth.getMonth();$('calendarTitle').textContent=fmt.format(currentMonth);const first=",
+              "const y=currentMonth.getFullYear(),m=currentMonth.getMonth();$('calendarTitle').textContent=fmt.format(currentMonth);$('calendarMonthTotal').textContent='合計 '+minutesLabel(sumEntries(e=>e.date.startsWith(y+'-'+pad(m+1)+'-')));const first="
+            ),
+            (
+              "function renderYear(){const y=currentMonth.getFullYear();$('calendarTitle').textContent=y+'年の日別';$('yearView').className='year-grid';",
+              "function renderYear(){const y=currentMonth.getFullYear();$('calendarTitle').textContent=y+'年の日別';$('calendarMonthTotal').textContent='';$('yearView').className='year-grid';"
+            ),
+            (
+              "return'<div class=\"mini-month\"><h4>'+(m+1)+'月</h4><div class=\"mini-days\">'+dots+'</div></div>'",
+              "const monthTotal=sumEntries(e=>e.date.startsWith(y+'-'+pad(m+1)+'-'));return'<div class=\"mini-month\"><div class=\"mini-month-head\"><h4>'+(m+1)+'月</h4><span class=\"mini-month-total\">'+minutesLabel(monthTotal)+'</span></div><div class=\"mini-days\">'+dots+'</div></div>'"
+            ),
+            (
+              "function renderMonths(){const y=currentMonth.getFullYear();$('calendarTitle').textContent=y+'年の月合計';$('yearView').className='year-grid month-grid';",
+              "function renderMonths(){const y=currentMonth.getFullYear();$('calendarTitle').textContent=y+'年の月合計';$('calendarMonthTotal').textContent='';$('yearView').className='year-grid month-grid';"
+            ),
+          ]
+
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit(f'pattern not found: {old[:100]}')
+              s = s.replace(old, new, 1)
+
+          # Make the remaining three progress KPIs fit neatly on desktop.
+          marker = '.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}'
+          if marker not in s:
+              raise SystemExit('kpi-grid marker not found')
+          s = s.replace(marker, marker + '.progress-kpis .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}', 1)
+
+          # Preserve responsive behavior for the three progress KPIs.
+          marker900 = '@media(max-width:900px){.record-layout,.history-layout{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}'
+          if marker900 not in s:
+              raise SystemExit('900px media marker not found')
+          s = s.replace(marker900, marker900 + '.progress-kpis .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}', 1)
+
+          marker620 = '@media(max-width:620px){.app-shell{padding:18px 14px 40px}'
+          if marker620 not in s:
+              raise SystemExit('620px media marker not found')
+          s = s.replace(marker620, marker620 + '.progress-kpis .kpi-grid{grid-template-columns:1fr}', 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Show monthly totals in calendar history"
+          git push
