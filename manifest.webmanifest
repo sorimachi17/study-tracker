@@ -1,0 +1,19 @@
+{
+  "name": "Study Tracker",
+  "short_name": "Study Tracker",
+  "description": "英語学習時間を記録・振り返るためのStudy Tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1524",
+  "theme_color": "#0e1524",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
