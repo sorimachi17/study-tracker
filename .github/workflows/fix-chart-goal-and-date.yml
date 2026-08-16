@@ -1,0 +1,48 @@
+name: Fix chart goal label and mobile date
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update chart labels
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace("R=mobile?18:28", "R=mobile?30:28")
+
+          old_gx = "gx=xTicks.map(v=>'<text class=\"chart-axis-text\" x=\"'+x(v).toFixed(1)+'\" y=\"'+(H-(mobile?20:17))+'\" text-anchor=\"middle\">'+chartDateLabel(v)+'</text>').join('')"
+          new_gx = "gx=xTicks.map((v,i,arr)=>{const isFirst=i===0,isLast=i===arr.length-1,tx=isFirst?L:isLast?(W-R):x(v),anchor=isFirst?'start':isLast?'end':'middle';return '<text class=\"chart-axis-text\" x=\"'+tx.toFixed(1)+'\" y=\"'+(H-(mobile?20:17))+'\" text-anchor=\"'+anchor+'\">'+chartDateLabel(v)+'</text>'}).join('')"
+          if old_gx not in s:
+              raise SystemExit('x-axis label snippet not found')
+          s = s.replace(old_gx, new_gx, 1)
+
+          old_goal = "text-anchor=\"end\">'+targetHours+'h</text>"
+          new_goal = "text-anchor=\"end\">目標</text>"
+          if old_goal not in s:
+              raise SystemExit('goal label snippet not found')
+          s = s.replace(old_goal, new_goal, 1)
+
+          s = s.replace("else label.textContent='100時間の到達予測 -'", "else label.textContent=targetHours+'時間の到達予測 -'", 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix chart goal label and mobile date clipping"
+          git push origin main
