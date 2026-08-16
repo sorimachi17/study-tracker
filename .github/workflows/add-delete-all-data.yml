@@ -1,0 +1,44 @@
+name: Add delete all study data
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add delete-all control
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old_menu = '<button class="btn" id="importJsonBtn" type="button">JSON読込</button><input class="file-input" id="importFile" type="file" accept="application/json" />'
+          new_menu = '<button class="btn" id="importJsonBtn" type="button">JSON読込</button><button class="btn danger" id="deleteAllDataBtn" type="button">学習データをすべて削除</button><input class="file-input" id="importFile" type="file" accept="application/json" />'
+          if old_menu not in s:
+              raise SystemExit('data menu snippet not found')
+          s = s.replace(old_menu, new_menu, 1)
+
+          marker = "$('exportJsonBtn').addEventListener('click'"
+          if marker not in s:
+              raise SystemExit('export marker not found')
+          handler = "$('deleteAllDataBtn').addEventListener('click',()=>{if(!entries.length){showToast('削除する記録がありません');return}if(!confirm('これまでの学習記録をすべて削除しますか？\\nこの操作は元に戻せません。'))return;entries=[];save(STORAGE.entries,entries);localStorage.removeItem(LEGACY_STORAGE.entries);localStorage.setItem(STORAGE.legacyMigrated,'true');selectedDate=todayKey();currentMonth=new Date();currentMonth.setDate(1);renderAll();showToast('学習記録をすべて削除しました')});"
+          s = s.replace(marker, handler + marker, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add delete all study data button"
+          git push origin main
