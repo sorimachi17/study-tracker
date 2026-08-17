@@ -1,0 +1,40 @@
+name: Fix category input once
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-category-input-once.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make category fields editable
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          replacements = [
+            ('<label for="categoryInput">カテゴリ</label><select id="categoryInput" required></select>', '<label for="categoryInput">カテゴリ</label><input id="categoryInput" type="text" list="categoryOptions" autocomplete="off" placeholder="例: Conversation" required /><datalist id="categoryOptions"></datalist>'),
+            ('<label for="editCategoryInput">カテゴリ</label><select id="editCategoryInput" required></select>', '<label for="editCategoryInput">カテゴリ</label><input id="editCategoryInput" type="text" list="categoryOptions" autocomplete="off" required />'),
+            ("function renderCategorySelect(){const o=categories.map(c=>'<option value=\"'+escapeHtml(c)+'\">'+escapeHtml(c)+'</option>').join('');$('categoryInput').innerHTML=o;$('editCategoryInput').innerHTML=o}", "function renderCategorySelect(){const o=categories.map(c=>'<option value=\"'+escapeHtml(c)+'\"></option>').join('');$('categoryOptions').innerHTML=o}"),
+            ("const date=$('dateInput').value||todayKey(),category=$('categoryInput').value,minutes=Number($('minutesInput').value)", "const date=$('dateInput').value||todayKey(),category=$('categoryInput').value.trim(),minutes=Number($('minutesInput').value)"),
+            ("if(!date||!category||!minutes||minutes<1)return;entries.push", "if(!date||!category||!minutes||minutes<1)return;if(!categories.includes(category)){categories.push(category);save(STORAGE.categories,categories)}entries.push"),
+            ("e.category=$('editCategoryInput').value;e.startTime", "e.category=$('editCategoryInput').value.trim();if(e.category&&!categories.includes(e.category)){categories.push(e.category);save(STORAGE.categories,categories)}e.startTime")
+          ]
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit('Expected text not found: ' + old[:120])
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Remove one-time workflow and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-category-input-once.yml
+          git add index.html
+          git commit -m "Fix editable category input"
+          git push
