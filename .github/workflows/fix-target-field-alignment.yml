@@ -1,0 +1,24 @@
+name: Fix target field alignment
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-target-field-alignment.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply alignment fix
+        run: python3 .github/scripts/fix_target_field_alignment.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-target-field-alignment.yml .github/scripts/fix_target_field_alignment.py
+          git add index.html
+          git commit -m "Align target and start date fields"
+          git push origin main
