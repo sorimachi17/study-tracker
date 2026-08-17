@@ -1,0 +1,48 @@
+name: Fix mobile inputs once
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mobile-inputs-once.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch mobile input behavior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          marker='''\n/* mobile-input-focus-fix-v9 */\ninput[type="text"],input[type="number"],textarea{\n  pointer-events:auto!important;\n  -webkit-user-select:text!important;\n  user-select:text!important;\n  touch-action:manipulation!important;\n  position:relative;\n  z-index:1;\n}\n#categoryInput,#newCategoryInput,#editCategoryInput,#targetHoursInput{\n  font-size:16px!important;\n  -webkit-appearance:none;\n  appearance:none;\n  opacity:1!important;\n  pointer-events:auto!important;\n  -webkit-user-select:text!important;\n  user-select:text!important;\n}\n.goal-hours-control{position:relative;z-index:1}\n.goal-hours-control input{pointer-events:auto!important;position:relative;z-index:2}\n.goal-hours-control span{pointer-events:none!important}\n'''
+          if 'mobile-input-focus-fix-v9' not in s:
+              s=s.replace('</style>', marker+'\n</style>')
+
+          s=s.replace('id="targetHoursInput" type="number" min="1" step="1" value="100"', 'id="targetHoursInput" type="number" inputmode="numeric" min="1" step="1" value="100"')
+          s=s.replace('id="newCategoryInput" type="text" placeholder="例: Conversation"', 'id="newCategoryInput" type="text" autocomplete="off" autocapitalize="none" placeholder="例: Conversation"')
+          s=s.replace('id="categoryInput" type="text" list="categoryOptions" autocomplete="off" placeholder="例: Conversation"', 'id="categoryInput" type="text" autocomplete="off" autocapitalize="none" placeholder="例: Conversation"')
+          s=s.replace('<datalist id="categoryOptions"></datalist>', '')
+          s=s.replace('id="editCategoryInput" type="text" list="categoryOptions" autocomplete="off" required', 'id="editCategoryInput" type="text" autocomplete="off" autocapitalize="none" required')
+          old="function renderAll(){renderCategorySelect();renderDashboard();renderProgressChart();renderCalendar();renderRecent();renderSelectedDay();renderCategories();$('dateInput').value=selectedDate;$('selectedDateLabel').textContent=selectedDate}function renderCategorySelect(){const o=categories.map(c=>'<option value=\"'+escapeHtml(c)+'\"></option>').join('');$('categoryOptions').innerHTML=o}"
+          new="function renderAll(){renderCategorySelect();renderDashboard();renderProgressChart();renderCalendar();renderRecent();renderSelectedDay();renderCategories();$('dateInput').value=selectedDate;$('selectedDateLabel').textContent=selectedDate}function renderCategorySelect(){}"
+          s=s.replace(old,new)
+
+          focus_js='''\n/* mobile-input-focus-js-v9 */\n['categoryInput','newCategoryInput','editCategoryInput','targetHoursInput'].forEach(id=>{\n  const el=$(id);\n  if(!el)return;\n  el.addEventListener('touchend',()=>{setTimeout(()=>el.focus({preventScroll:true}),0)},{passive:true});\n});\n'''
+          if 'mobile-input-focus-js-v9' not in s:
+              s=s.replace('/* pwa-runtime-v1 */', focus_js+'\n/* pwa-runtime-v1 */')
+          p.write_text(s)
+
+          sw=Path('sw.js')
+          t=sw.read_text().replace("study-tracker-pwa-v4","study-tracker-pwa-v5")
+          sw.write_text(t)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sw.js
+          git diff --cached --quiet || git commit -m "Fix iPhone input focus for categories and goals"
+          git push
