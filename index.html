@@ -72,6 +72,24 @@ body.record-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden
 /* target-start-date-v2 */
 .target-setting{align-items:flex-end}.target-field{display:flex;flex-direction:column;gap:5px}.target-field label{margin:0}.target-control{width:150px!important;height:42px!important;min-height:42px!important;box-sizing:border-box}.target-inline{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}.target-inline:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}.target-setting .target-inline input{flex:1;width:auto!important;min-width:0;height:40px!important;min-height:40px!important;border:0!important;border-radius:0;background:transparent;padding:0 8px;box-shadow:none!important}.target-inline span{padding-right:9px;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap}.target-start-field input{padding:0 9px!important;line-height:normal}.target-setting .btn{height:42px;min-height:42px}.total-metrics{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:10px;align-items:stretch}.total-metric{min-width:0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}.total-metric-label{display:block;color:var(--muted);font-size:11px;font-weight:900;margin-bottom:8px}.total-metric .total-hours,.target-period-hours{font-size:clamp(36px,5vw,58px);line-height:1;font-weight:900;letter-spacing:-.05em}.total-metric .total-hours small,.target-period-hours small{font-size:16px;color:var(--muted);font-weight:850;letter-spacing:0}.total-metric>em,.target-period-total>em{display:block;margin-top:8px;color:var(--muted);font-size:10px;font-style:normal;font-weight:750}.target-period-total{background:var(--blueSoft)}.target-period-content{display:flex;align-items:center;justify-content:space-between;gap:14px}.target-period-content>div:first-child{min-width:0}.target-period-total .goal-orbit{width:88px}.target-period-total .goal-orbit strong{font-size:20px}.target-period-total .goal-orbit span{font-size:10px}
 @media(max-width:620px){.target-setting{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:8px;width:100%}.target-control{width:100%!important}.target-setting .btn{grid-column:1/-1;width:100%}.total-metrics{grid-template-columns:1fr}.total-metric{padding:14px}.total-metric .total-hours,.target-period-hours{font-size:42px}.target-period-total .goal-orbit{width:82px}}
+
+/* target-field-alignment-v3 */
+.target-setting{align-items:end!important}
+.target-field{display:grid!important;grid-template-rows:16px 42px!important;gap:6px!important;align-self:end!important;min-width:0!important}
+.target-field label{display:block!important;height:16px!important;min-height:16px!important;max-height:16px!important;line-height:16px!important;margin:0!important;padding:0!important}
+.target-control{height:42px!important;min-height:42px!important;max-height:42px!important;box-sizing:border-box!important}
+.target-inline{display:flex!important;align-items:center!important;overflow:hidden!important;padding:0!important}
+.target-setting .target-inline input{height:40px!important;min-height:40px!important;max-height:40px!important;line-height:40px!important;padding:0 10px!important;margin:0!important;box-sizing:border-box!important;-webkit-appearance:none!important;appearance:none!important}
+.target-inline span{display:flex!important;align-items:center!important;height:40px!important;min-height:40px!important;max-height:40px!important;line-height:40px!important;padding:0 10px 0 0!important;margin:0!important;box-sizing:border-box!important}
+.target-start-field input{display:block!important;height:42px!important;min-height:42px!important;max-height:42px!important;line-height:42px!important;padding:0 10px!important;margin:0!important;box-sizing:border-box!important}
+.target-setting .btn{height:42px!important;min-height:42px!important;max-height:42px!important;align-self:end!important}
+@media(max-width:620px){
+  .target-setting{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto 42px!important;column-gap:8px!important;row-gap:10px!important;align-items:end!important;width:100%!important}
+  .target-field{grid-template-rows:16px 42px!important;width:100%!important;align-self:end!important}
+  .target-control,.target-start-field input{width:100%!important}
+  .target-setting .btn{grid-column:1/-1!important;grid-row:2!important;width:100%!important;margin:0!important}
+}
+
 </style>
 </head>
 <body>
