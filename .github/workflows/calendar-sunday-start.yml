@@ -1,0 +1,54 @@
+name: Set calendar Sunday start
+
+on:
+  push:
+    paths:
+      - '.github/workflows/calendar-sunday-start.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update calendar to Sunday start
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  '<div class="dow"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>',
+                  '<div class="dow"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>'
+              ),
+              ('function weekStart(date){const d=new Date(date),day=(d.getDay()+6)%7;',
+               'function weekStart(date){const d=new Date(date),day=d.getDay();'),
+              ('offset=(first.getDay()+6)%7,totals=[];',
+               'offset=first.getDay(),totals=[];'),
+              ('offset=(new Date(y,m,1).getDay()+6)%7,stats=',
+               'offset=new Date(y,m,1).getDay(),stats='),
+              ('day=(start.getDay()+6)%7;end.setDate(end.getDate()+(6-day));',
+               'day=start.getDay();end.setDate(end.getDate()+(6-day));'),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one match, found {count}: {old[:80]}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit change and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/calendar-sunday-start.yml
+          git add index.html
+          git commit -m "Change calendar week start to Sunday"
+          git push
