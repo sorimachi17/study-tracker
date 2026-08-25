@@ -1,4 +1,4 @@
-const CACHE_NAME='study-tracker-pwa-v5';
+const CACHE_NAME='study-tracker-pwa-v6';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./app-icon.svg','./app-icon-180.png','./app-icon-192.png','./app-icon-512.png'];
 
 self.addEventListener('install',event=>{
