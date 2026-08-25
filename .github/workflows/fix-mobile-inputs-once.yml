@@ -1,4 +1,4 @@
-name: Fix mobile inputs once
+name: Add projection comparison UI once
 on:
   push:
     paths:
@@ -6,43 +6,67 @@ on:
 permissions:
   contents: write
 jobs:
-  fix:
+  patch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch mobile input behavior
+      - name: Patch projection comparison UI
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
+
           p=Path('index.html')
           s=p.read_text()
 
-          marker='''\n/* mobile-input-focus-fix-v9 */\ninput[type="text"],input[type="number"],textarea{\n  pointer-events:auto!important;\n  -webkit-user-select:text!important;\n  user-select:text!important;\n  touch-action:manipulation!important;\n  position:relative;\n  z-index:1;\n}\n#categoryInput,#newCategoryInput,#editCategoryInput,#targetHoursInput{\n  font-size:16px!important;\n  -webkit-appearance:none;\n  appearance:none;\n  opacity:1!important;\n  pointer-events:auto!important;\n  -webkit-user-select:text!important;\n  user-select:text!important;\n}\n.goal-hours-control{position:relative;z-index:1}\n.goal-hours-control input{pointer-events:auto!important;position:relative;z-index:2}\n.goal-hours-control span{pointer-events:none!important}\n'''
-          if 'mobile-input-focus-fix-v9' not in s:
-              s=s.replace('</style>', marker+'\n</style>')
+          css='''
+/* projection-comparison-v12 */
+.chart-legend{flex-wrap:wrap}
+.chart-legend b{font:inherit;color:inherit}
+.legend-line.previous{height:0;background:none;border-top:4px dashed var(--muted);border-radius:0}
+.legend-line.latest{height:0;background:none;border-top:4px dashed var(--green);border-radius:0}
+.projection-compare{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);font-size:12px;font-weight:850;color:var(--muted)}
+.projection-compare strong{color:var(--green);font-size:13px}.projection-compare .arrow{color:var(--muted)}
+.chart-projection-previous{fill:none;stroke:var(--muted);stroke-width:3;stroke-dasharray:9 7;stroke-linecap:round;opacity:.78}
+.chart-projection-latest{fill:none;stroke:var(--green);stroke-width:3.5;stroke-dasharray:9 7;stroke-linecap:round}
+.chart-projection-dot-previous{fill:var(--muted);opacity:.9}.chart-projection-dot-latest{fill:var(--green)}
+.chart-today-dot{fill:var(--blue);stroke:var(--surface);stroke-width:2}
+@media(max-width:620px){
+  .chart-legend{gap:10px 14px;font-size:12px}
+  .projection-compare{font-size:11px;gap:6px;padding:9px 10px}
+  .projection-compare strong{font-size:12px}
+}
+'''
+          if 'projection-comparison-v12' not in s:
+              s=s.replace('</style>', css+'\n</style>')
 
-          s=s.replace('id="targetHoursInput" type="number" min="1" step="1" value="100"', 'id="targetHoursInput" type="number" inputmode="numeric" min="1" step="1" value="100"')
-          s=s.replace('id="newCategoryInput" type="text" placeholder="例: Conversation"', 'id="newCategoryInput" type="text" autocomplete="off" autocapitalize="none" placeholder="例: Conversation"')
-          s=s.replace('id="categoryInput" type="text" list="categoryOptions" autocomplete="off" placeholder="例: Conversation"', 'id="categoryInput" type="text" autocomplete="off" autocapitalize="none" placeholder="例: Conversation"')
-          s=s.replace('<datalist id="categoryOptions"></datalist>', '')
-          s=s.replace('id="editCategoryInput" type="text" list="categoryOptions" autocomplete="off" required', 'id="editCategoryInput" type="text" autocomplete="off" autocapitalize="none" required')
-          old="function renderAll(){renderCategorySelect();renderDashboard();renderProgressChart();renderCalendar();renderRecent();renderSelectedDay();renderCategories();$('dateInput').value=selectedDate;$('selectedDateLabel').textContent=selectedDate}function renderCategorySelect(){const o=categories.map(c=>'<option value=\"'+escapeHtml(c)+'\"></option>').join('');$('categoryOptions').innerHTML=o}"
-          new="function renderAll(){renderCategorySelect();renderDashboard();renderProgressChart();renderCalendar();renderRecent();renderSelectedDay();renderCategories();$('dateInput').value=selectedDate;$('selectedDateLabel').textContent=selectedDate}function renderCategorySelect(){}"
-          s=s.replace(old,new)
+          old_legend='<div class="chart-legend"><span><i class="legend-line"></i>実績</span></div><div class="chart-wrap" id="cumulativeChart"></div>'
+          new_legend='<div class="chart-legend"><span><i class="legend-line"></i>実績</span><span><i class="legend-line previous"></i><b id="projectionLegendPrevious">昨日の到達予測</b></span><span><i class="legend-line latest"></i><b id="projectionLegendLatest">最新の到達予測</b></span></div><div class="projection-compare" id="projectionCompare">到達予測を計算中...</div><div class="chart-wrap" id="cumulativeChart"></div>'
+          s=s.replace(old_legend,new_legend)
 
-          focus_js='''\n/* mobile-input-focus-js-v9 */\n['categoryInput','newCategoryInput','editCategoryInput','targetHoursInput'].forEach(id=>{\n  const el=$(id);\n  if(!el)return;\n  el.addEventListener('touchend',()=>{setTimeout(()=>el.focus({preventScroll:true}),0)},{passive:true});\n});\n'''
-          if 'mobile-input-focus-js-v9' not in s:
-              s=s.replace('/* pwa-runtime-v1 */', focus_js+'\n/* pwa-runtime-v1 */')
+          dashboard=r'''function targetProjectionAsOf(asOfKey){const startKey=effectiveTargetStartDate(),start=parseDate(startKey),asOf=parseDate(asOfKey);if(start>asOf)return{date:null,days:null,total:0,avg:0,achieved:false};const relevant=entries.filter(e=>e.date>=startKey&&e.date<=asOfKey),total=relevant.reduce((sum,e)=>sum+Number(e.minutes||0),0),targetMin=targetHours*60,remaining=Math.max(0,targetMin-total),daysElapsed=Math.max(1,Math.floor((asOf-start)/DAY_MS)+1),avg=total/daysElapsed;if(remaining<=0)return{date:new Date(asOf),days:0,total,avg,achieved:true};if(avg<=0)return{date:null,days:null,total,avg,achieved:false};const days=Math.ceil(remaining/avg),target=new Date(asOf);target.setDate(target.getDate()+days);return{date:target,days,total,avg,achieved:false}}
+function projectionDeltaDays(previous,latest){return previous&&previous.date&&latest&&latest.date?Math.round((previous.date-latest.date)/DAY_MS):null}
+function renderDashboard(){const totalMin=sumEntries(()=>true),todayMin=sumEntries(e=>e.date===todayKey()),goalMin=targetPeriodTotal(),targetMin=targetHours*60,pct=Math.min(100,goalMin/targetMin*100),best=targetPeriodBestDay(),avgDay=targetPeriodDailyAverage(),startKey=effectiveTargetStartDate(),streak=targetPeriodStreakStats(),today=parseDate(todayKey()),yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);const latest=targetProjectionAsOf(todayKey()),previous=yesterday>=parseDate(startKey)?targetProjectionAsOf(dateKey(yesterday)):null,delta=projectionDeltaDays(previous,latest);$('pageTitle').textContent='英語'+targetHours+'時間チャレンジ';$('targetHoursInput').value=targetHours;$('targetStartDateInput').value=startKey;$('targetPredictionLabel').textContent='到達予測';$('totalHours').textContent=Math.floor(totalMin/60)+'h';$('totalMinutes').textContent=minutesLabel(totalMin%60);$('targetPeriodHours').textContent=Math.floor(goalMin/60)+'h';$('targetPeriodMinutes').textContent=minutesLabel(goalMin%60);$('targetPeriodRange').textContent=formatShortDate(startKey)+'開始 ・ 目標 '+targetHours+'時間';$('todayStudyTotal').textContent=studyTimeLabel(todayMin);$('todayStudyDetail').textContent=formatShortDate(todayKey());$('goalOrbit').style.setProperty('--pct',pct+'%');$('goalOrbitPercent').textContent=Math.round(pct)+'%';$('daysTo100').textContent=latest.date?formatShortDate(dateKey(latest.date)):'-';$('paceDetail').textContent=previous&&previous.date&&latest.date?(delta>0?'昨日 '+formatShortDate(dateKey(previous.date))+' → '+delta+'日短縮':delta<0?'昨日 '+formatShortDate(dateKey(previous.date))+' → '+Math.abs(delta)+'日後退':'昨日 '+formatShortDate(dateKey(previous.date))+' と同じ'):(latest.days!=null?'あと'+latest.days+'日':'記録が増えると予測');$('bestDay').textContent=studyTimeLabel(best.minutes);$('bestDayDate').textContent=best.date?formatShortDate(best.date):'-';$('avgDay').textContent=studyTimeLabel(avgDay);$('avgDayDetail').textContent='目標開始日から今日まで';$('streakDays').textContent=streak.current+'日';$('currentStreakDetail').textContent=streak.current>0?'目標期間で継続':'今日の記録なし';$('longestStreakDays').textContent=streak.longest+'日';$('longestStreakDetail').textContent=streak.longest?(streak.start===streak.end?formatShortDate(streak.start):formatShortDate(streak.start)+'〜'+formatShortDate(streak.end)):'-'}
+function chartDateLabel'''
+          s,count=re.subn(r'function renderDashboard\(\)\{.*?\}\nfunction chartDateLabel',dashboard,s,count=1,flags=re.S)
+          if count!=1:
+              raise SystemExit('renderDashboard patch target not found')
+
+          chart=r'''function chartDateLabel(d){return(d.getMonth()+1)+'/'+d.getDate()}function renderProgressChart(){const el=$('cumulativeChart'),label=$('projectionDateLabel'),compare=$('projectionCompare'),legendPrev=$('projectionLegendPrevious'),legendLatest=$('projectionLegendLatest'),startKey=effectiveTargetStartDate(),start=parseDate(startKey),today=parseDate(todayKey()),yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);const daily={};targetPeriodEntries().forEach(e=>{if(e.date<=todayKey())daily[e.date]=(daily[e.date]||0)+Number(e.minutes||0)});if(start>today){el.innerHTML='<div class="empty">開始日が未来に設定されています。</div>';label.textContent='目標到達予測 -';if(compare)compare.textContent='開始日以降に到達予測を表示します';return}const points=[];let total=0,d=new Date(start);while(d<=today){const k=dateKey(d);total+=daily[k]||0;points.push({date:new Date(d),minutes:total});d.setDate(d.getDate()+1)}const latest=targetProjectionAsOf(todayKey()),previous=yesterday>=start?targetProjectionAsOf(dateKey(yesterday)):null,delta=projectionDeltaDays(previous,latest),latestText=latest.date?formatShortDate(dateKey(latest.date)):'-',previousText=previous&&previous.date?formatShortDate(dateKey(previous.date)):'-';if(legendLatest)legendLatest.textContent='最新 '+latestText;if(legendPrev)legendPrev.textContent='昨日 '+previousText;if(latest.date){label.textContent=delta>0?delta+'日短縮':delta<0?Math.abs(delta)+'日後退':'最新 '+latestText}else label.textContent='目標到達予測 -';if(compare){if(previous&&previous.date&&latest.date){const change=delta>0?'<strong>'+delta+'日短縮</strong>':delta<0?'<strong>'+Math.abs(delta)+'日後退</strong>':'<strong>変化なし</strong>';compare.innerHTML='<span>昨日 '+previousText+'</span><span class="arrow">→</span><span>最新 '+latestText+'</span><span class="arrow">・</span>'+change}else if(latest.date)compare.innerHTML='<span>最新の到達予測</span><strong>'+latestText+'</strong>';else compare.textContent='記録が増えると到達予測を比較できます'}const targetMin=targetHours*60,mobile=window.innerWidth<=620,yMax=Math.max(targetMin,total,60),projectionDates=[latest.date,previous&&previous.date].filter(Boolean),maxProjection=projectionDates.length?new Date(Math.max(...projectionDates.map(v=>v.getTime()))):today,x1Date=maxProjection>today?maxProjection:today,W=mobile?500:1000,H=mobile?350:340,L=mobile?88:74,R=mobile?30:28,T=mobile?46:22,B=mobile?64:54,pw=W-L-R,ph=H-T-B,x0=start.getTime(),x1=Math.max(x1Date.getTime(),x0+DAY_MS),x=dt=>L+(dt.getTime()-x0)/(x1-x0)*pw,y=m=>T+(1-m/yMax)*ph,actual=points.map(p=>x(p.date).toFixed(1)+','+y(p.minutes).toFixed(1)).join(' '),yTicks=[0,.25,.5,.75,1].map(v=>yMax*v),spanDays=Math.max(1,Math.round((x1-x0)/DAY_MS)),xTicks=[start];if(today>start&&today<x1Date)xTicks.push(today);if(x1Date>start)xTicks.push(x1Date);const uniqueTicks=xTicks.filter((v,i,a)=>a.findIndex(z=>dateKey(z)===dateKey(v))===i),gy=yTicks.map(v=>'<line class="chart-grid" x1="'+L+'" y1="'+y(v).toFixed(1)+'" x2="'+(W-R)+'" y2="'+y(v).toFixed(1)+'"></line><text class="chart-axis-text" x="'+(L-(mobile?14:12))+'" y="'+(y(v)+(mobile?8:5)).toFixed(1)+'" text-anchor="end">'+(v/60).toFixed(v%60?1:0)+'h</text>').join(''),gx=uniqueTicks.map((v,i,arr)=>{const tx=x(v),anchor=i===0?'start':i===arr.length-1?'end':'middle';return '<text class="chart-axis-text" x="'+tx.toFixed(1)+'" y="'+(H-(mobile?20:17))+'" text-anchor="'+anchor+'">'+chartDateLabel(v)+'</text>'}).join(''),goalY=y(targetMin).toFixed(1),prevLine=previous&&previous.date?'<line class="chart-projection-previous" x1="'+x(yesterday).toFixed(1)+'" y1="'+y(previous.total).toFixed(1)+'" x2="'+x(previous.date).toFixed(1)+'" y2="'+goalY+'"></line><circle class="chart-projection-dot-previous" cx="'+x(previous.date).toFixed(1)+'" cy="'+goalY+'" r="5"></circle>':'',latestLine=latest.date?'<line class="chart-projection-latest" x1="'+x(today).toFixed(1)+'" y1="'+y(total).toFixed(1)+'" x2="'+x(latest.date).toFixed(1)+'" y2="'+goalY+'"></line><circle class="chart-projection-dot-latest" cx="'+x(latest.date).toFixed(1)+'" cy="'+goalY+'" r="5.5"></circle>':'',todayDot='<circle class="chart-today-dot" cx="'+x(today).toFixed(1)+'" cy="'+y(total).toFixed(1)+'" r="5"></circle>';el.innerHTML='<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="実績と昨日・最新の到達予測"><line class="chart-goal" x1="'+L+'" y1="'+goalY+'" x2="'+(W-R)+'" y2="'+goalY+'"></line>'+gy+'<text class="chart-axis-title" x="'+(mobile?8:14)+'" y="'+(mobile?22:18)+'">目標期間</text><text class="chart-goal-label" x="'+(W-R)+'" y="'+(Number(goalY)-(mobile?10:7))+'" text-anchor="end">目標</text>'+gx+'<polyline class="chart-actual" points="'+actual+'"></polyline>'+prevLine+latestLine+todayDot+'</svg>'}function level'''
+          s,count=re.subn(r'function chartDateLabel\(d\)\{.*?\}function level',chart,s,count=1,flags=re.S)
+          if count!=1:
+              raise SystemExit('renderProgressChart patch target not found')
+
           p.write_text(s)
 
           sw=Path('sw.js')
-          t=sw.read_text().replace("study-tracker-pwa-v4","study-tracker-pwa-v5")
+          t=sw.read_text().replace("study-tracker-pwa-v5","study-tracker-pwa-v6")
           sw.write_text(t)
           PY
-      - name: Commit fix
+      - name: Commit projection comparison UI
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html sw.js
-          git diff --cached --quiet || git commit -m "Fix iPhone input focus for categories and goals"
+          git diff --cached --quiet || git commit -m "Compare yesterday and latest study projections"
           git push
